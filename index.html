@@ -28,8 +28,10 @@
     
     input, select, textarea { width: 100%; padding: 12px; margin-bottom: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 14px; }
     input:focus, select:focus { outline: none; border-color: var(--accent); }
-    button { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    button { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-bottom: 8px; }
     button:hover { background: var(--accent-hover); }
+    button.btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    button.btn-secondary:hover { background: var(--border); }
     
     /* App Interface Header */
     .app-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -38,7 +40,7 @@
     .badge { padding: 4px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; font-size: 10px; }
     .badge-owner { background: var(--owner-badge); color: #fff; }
     .badge-staff { background: var(--muted); color: #fff; }
-    .btn-logout { background: transparent; border: 1px solid var(--border); padding: 6px 12px; width: auto; font-size: 12px; }
+    .btn-logout { background: transparent; border: 1px solid var(--border); padding: 6px 12px; width: auto; font-size: 12px; margin-bottom: 0; }
 
     /* Navigation Bar */
     .nav-bar { background: var(--card); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; }
@@ -61,15 +63,14 @@
     table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
     th { background: #12181F; padding: 10px; border-bottom: 1px solid var(--border); color: var(--muted); }
     td { padding: 10px; border-bottom: 1px solid var(--border); }
-    .status-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
-    .status-chip { background: var(--card); border: 1px solid var(--border); padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+    .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: var(--border); color: var(--text); }
     
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- 1. API CONFIGURATION MODAL (Saved to local storage on first load) -->
+  <!-- 1. API CONFIGURATION MODAL -->
   <div id="config-screen" class="center-screen hidden">
     <div class="auth-card">
       <h1>Database Setup</h1>
@@ -113,27 +114,24 @@
 
     <main class="main-content">
       
-      <!-- TAB 1: QUICK INTAKE & 10-TIER PRICING ENGINE TEST -->
+      <!-- TAB 1: INTAKE & PRICING -->
       <div id="quick-entry" class="panel active">
-        <div class="status-bar">
-          <div class="status-chip">Intake</div>
-          <div class="status-chip">Research</div>
-          <div class="status-chip">Ready to List</div>
-          <div class="status-chip">Listed</div>
-          <div class="status-chip">Sold</div>
-          <div class="status-chip">Shipped</div>
-          <div class="status-chip">Closed</div>
-        </div>
-
         <div class="grid-2">
           <div class="card">
-            <div class="card-title">Quick Entry Item Evaluation</div>
-            <label style="font-size: 12px; color: var(--muted);">Category Select</label>
+            <div class="card-title">New Item Intake & Valuation</div>
+            
+            <label style="font-size: 12px; color: var(--muted);">Item Title / Model Name *</label>
+            <input type="text" id="eval-title" placeholder="e.g. Leica M6 TTL 0.72 Black Chrome">
+
+            <label style="font-size: 12px; color: var(--muted);">SKU (Leave blank to auto-generate)</label>
+            <input type="text" id="eval-sku" placeholder="e.g. SKU-1006">
+
+            <label style="font-size: 12px; color: var(--muted);">Category Select *</label>
             <select id="eval-category">
               <option value="">Select Category...</option>
             </select>
 
-            <label style="font-size: 12px; color: var(--muted);">Condition Grade (10-Tier)</label>
+            <label style="font-size: 12px; color: var(--muted);">Condition Grade (10-Tier) *</label>
             <select id="eval-condition">
               <option value="NEW">NEW (100%)</option>
               <option value="LN">LN - Like New (85%)</option>
@@ -147,19 +145,23 @@
               <option value="PARTS">PARTS (5%)</option>
             </select>
 
+            <label style="font-size: 12px; color: var(--muted);">Cost of Goods Sold - COGS ($)</label>
+            <input type="number" id="eval-cogs" placeholder="e.g. 1200.00">
+
             <label style="font-size: 12px; color: var(--muted);">Market NEW Price ($)</label>
-            <input type="number" id="eval-new-price" placeholder="e.g. 1000.00 (Leave blank for fallback)">
+            <input type="number" id="eval-new-price" placeholder="e.g. 2000.00 (Leave blank for fallback)">
 
             <label style="font-size: 12px; color: var(--muted);">Market EX+ Fallback Price ($)</label>
-            <input type="number" id="eval-explus-price" placeholder="e.g. 740.00 (Used if NEW unavailable)">
+            <input type="number" id="eval-explus-price" placeholder="e.g. 1400.00 (Used if NEW unavailable)">
 
-            <button onclick="runPricingEngine()">Calculate Sell Price</button>
+            <button onclick="runPricingEngine()">1. Calculate Target Price</button>
+            <button class="btn-secondary" id="btn-save-item" onclick="saveItemToInventory()" style="display:none;">2. Save Item to Inventory Ledger</button>
           </div>
 
           <div class="card">
             <div class="card-title">Valuation Engine Output</div>
             <div id="calc-results" style="font-size: 13px; line-height: 1.8; color: var(--muted);">
-              Run evaluation to resolve profile fallbacks, owner percentage overrides, and target sell values.
+              Fill in item details and click "Calculate Target Price" to evaluate.
             </div>
           </div>
         </div>
@@ -168,13 +170,16 @@
       <!-- TAB 2: INVENTORY LEDGER -->
       <div id="inventory-tab" class="panel">
         <div class="card">
-          <div class="card-title">Active Inventory</div>
+          <div class="card-title">
+            <span>Active Inventory Ledger</span>
+            <button class="btn-secondary" onclick="loadInventory()" style="width:auto; padding:4px 10px; font-size:12px; margin:0;">Refresh Data</button>
+          </div>
           <div class="table-container">
             <table>
               <thead>
                 <tr>
                   <th>SKU</th>
-                  <th>Item Name</th>
+                  <th>Item Title</th>
                   <th>Category</th>
                   <th>Grade</th>
                   <th>COGS</th>
@@ -183,7 +188,7 @@
                 </tr>
               </thead>
               <tbody id="inventory-table-body">
-                <tr><td colspan="7" style="text-align:center; color: var(--muted);">No inventory logged.</td></tr>
+                <tr><td colspan="7" style="text-align:center; color: var(--muted);">Loading inventory...</td></tr>
               </tbody>
             </table>
           </div>
@@ -195,7 +200,7 @@
         <div class="card">
           <div class="card-title">Condition Pricing Profile Overrides</div>
           <p style="font-size: 12px; color: var(--muted); margin-bottom: 15px;">
-            Customize profile percentages (1–5) across all 10 condition grades. Leaving an override blank preserves system defaults.
+            Customize profile percentages across all 10 condition grades. Leaving an override blank preserves default matrix rates.
           </p>
           <div class="table-container">
             <table>
@@ -223,6 +228,7 @@
     let supabaseClient = null;
     let currentUser = null;
     let userRole = 'staff';
+    let currentCalculatedPrice = null;
 
     // 1. INITIALIZATION & CONFIG
     window.addEventListener('DOMContentLoaded', () => {
@@ -294,7 +300,7 @@
     }
 
     async function loadUserProfile() {
-      const { data, error } = await supabaseClient
+      const { data } = await supabaseClient
         .from('profiles')
         .select('full_name, role')
         .eq('id', currentUser.id)
@@ -315,6 +321,7 @@
       document.getElementById('app-screen').classList.remove('hidden');
 
       loadCategories();
+      loadInventory();
       if (userRole === 'owner') loadOverrideMatrix(1);
     }
 
@@ -324,9 +331,11 @@
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       event.target.classList.add('active');
       document.getElementById(tabId).classList.add('active');
+
+      if (tabId === 'inventory-tab') loadInventory();
     }
 
-    // 4. DATA LOADERS & PRICING ENGINE
+    // 4. CATEGORIES & PRICING ENGINE
     async function loadCategories() {
       const { data } = await supabaseClient.from('item_categories').select('*').order('category_name');
       const select = document.getElementById('eval-category');
@@ -339,12 +348,14 @@
     }
 
     async function runPricingEngine() {
+      const title = document.getElementById('eval-title').value.trim();
       const catId = document.getElementById('eval-category').value;
       const cond = document.getElementById('eval-condition').value;
       const newPrice = parseFloat(document.getElementById('eval-new-price').value) || null;
       const explusPrice = parseFloat(document.getElementById('eval-explus-price').value) || null;
       const resultsDiv = document.getElementById('calc-results');
 
+      if (!title) return alert('Please enter an Item Title / Model Name.');
       if (!catId) return alert('Please select a category.');
       if (!newPrice && !explusPrice) return alert('Provide either a Market NEW or EX+ fallback price.');
 
@@ -364,18 +375,110 @@
       }
 
       const res = data[0];
+      currentCalculatedPrice = res.calculated_sell_price;
+
       resultsDiv.innerHTML = `
-        <div style="font-size:22px; font-weight:700; color:#fff; margin-bottom:10px;">
-          Calculated Sell Value: <span style="color:var(--accent);">$${res.calculated_sell_price}</span>
+        <div style="font-size:14px; font-weight:700; color:var(--text); margin-bottom:5px;">${title}</div>
+        <div style="font-size:24px; font-weight:700; color:var(--accent); margin-bottom:10px;">
+          $${res.calculated_sell_price}
         </div>
         <hr style="border:0; border-top:1px solid var(--border); margin:10px 0;">
         <div><strong>Pricing Method:</strong> ${res.used_pricing_method}</div>
         <div><strong>Anchor Price Base:</strong> $${res.pricing_anchor_price}</div>
         <div><strong>Applied Profile:</strong> Profile ${res.used_profile_id}</div>
-        <div><strong>Applied Percentage:</strong> ${res.applied_percentage}%</div>
+        <div><strong>Applied Grade Rate:</strong> ${res.applied_percentage}%</div>
       `;
+
+      document.getElementById('btn-save-item').style.display = 'block';
     }
 
+    // 5. SAVE ITEM TO INVENTORY
+    async function saveItemToInventory() {
+      const title = document.getElementById('eval-title').value.trim();
+      let sku = document.getElementById('eval-sku').value.trim();
+      const catId = document.getElementById('eval-category').value;
+      const cond = document.getElementById('eval-condition').value;
+      const cogs = parseFloat(document.getElementById('eval-cogs').value) || 0.00;
+
+      if (!title || !catId || currentCalculatedPrice === null) {
+        return alert('Please enter item details and calculate target price first.');
+      }
+
+      if (!sku) {
+        sku = 'SKU-' + Math.floor(100000 + Math.random() * 900000);
+      }
+
+      const { data, error } = await supabaseClient.from('inventory').insert([
+        {
+          sku: sku,
+          item_name: title,
+          category_id: catId,
+          condition_grade: cond,
+          cogs: cogs,
+          target_sell_price: currentCalculatedPrice,
+          status: 'Intake',
+          created_by: currentUser.id
+        }
+      ]);
+
+      if (error) {
+        alert('Error saving item: ' + error.message);
+      } else {
+        alert(`Saved successfully! Assigned SKU: ${sku}`);
+        // Reset Form
+        document.getElementById('eval-title').value = '';
+        document.getElementById('eval-sku').value = '';
+        document.getElementById('eval-cogs').value = '';
+        document.getElementById('eval-new-price').value = '';
+        document.getElementById('eval-explus-price').value = '';
+        document.getElementById('calc-results').innerHTML = 'Item saved to Inventory Ledger. Fill in new item details to evaluate.';
+        document.getElementById('btn-save-item').style.display = 'none';
+        currentCalculatedPrice = null;
+        loadInventory();
+      }
+    }
+
+    // 6. LOAD INVENTORY LEDGER
+    async function loadInventory() {
+      const tbody = document.getElementById('inventory-table-body');
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--muted);">Loading...</td></tr>';
+
+      const { data, error } = await supabaseClient
+        .from('inventory')
+        .select(`
+          id, sku, item_name, condition_grade, cogs, target_sell_price, status,
+          item_categories ( category_name )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="7" style="color:#ef5350; text-align:center;">Error: ${error.message}</td></tr>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--muted);">No inventory logged.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      data.forEach(item => {
+        const catName = item.item_categories ? item.item_categories.category_name : 'N/A';
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${item.sku}</strong></td>
+            <td>${item.item_name}</td>
+            <td>${catName}</td>
+            <td>${item.condition_grade}</td>
+            <td>$${parseFloat(item.cogs).toFixed(2)}</td>
+            <td style="color:var(--accent); font-weight:700;">$${parseFloat(item.target_sell_price).toFixed(2)}</td>
+            <td><span class="status-badge">${item.status}</span></td>
+          </tr>
+        `;
+      });
+    }
+
+    // 7. OWNER OVERRIDES
     async function loadOverrideMatrix(profileId) {
       const { data: defaults } = await supabaseClient
         .from('condition_pricing_profiles')
