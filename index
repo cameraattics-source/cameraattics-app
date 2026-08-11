@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Terminal Access</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root { --bg: #12181F; --card: #1A222D; --accent: #B5482A; --text: #E6E1D6; --muted: #7A8694; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .login-card { background: var(--card); border: 1px solid #2A3545; border-radius: 12px; padding: 28px; width: 100%; max-width: 360px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    h1 { font-size: 18px; font-weight: 600; text-align: center; margin: 0 0 20px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+    input { width: 100%; padding: 12px; margin-bottom: 14px; background: #12181F; border: 1px solid #2A3545; border-radius: 6px; color: #fff; font-size: 15px; }
+    button { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+    button:active { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h1>Terminal Sign-In</h1>
+    <input type="email" id="email" placeholder="Access ID">
+    <input type="password" id="password" placeholder="Passcode">
+    <button onclick="handleLogin()">Authorize Access</button>
+  </div>
+  <script>
+    function handleLogin() {
+      alert("System initialized. Connect Supabase keys in Phase 2 to activate auth.");
+    }
+  </script>
+</body>
+</html>
