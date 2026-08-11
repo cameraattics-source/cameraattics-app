@@ -367,17 +367,12 @@
     let userRole = 'staff';
     let loadedCategories = [];
 
-    // 1. INITIALIZATION & CONFIG
-    window.addEventListener('DOMContentLoaded', () => {
-      const savedUrl = localStorage.getItem('SB_URL');
-      const savedKey = localStorage.getItem('SB_KEY');
+// 1. HARDCODED API CONFIG (No setup screen needed)
+    const SB_URL = 'https://lhtaitctiamvmjwlgbsp.supabase.co'; // Replace with your actual Supabase URL
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxodGFpdGN0aWFtdm1qd2xnYnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NTczMjUsImV4cCI6MjEwMjAzMzMyNX0._I0Nv43Ufgn0jAss1-pNEMIohmI75bsSC6TjL-NNePs';                // Replace with your actual Supabase Anon Key
 
-      if (!savedUrl || !savedKey) {
-        document.getElementById('auth-screen').classList.add('hidden');
-        document.getElementById('config-screen').classList.remove('hidden');
-      } else {
-        initSupabase(savedUrl, savedKey);
-      }
+    window.addEventListener('DOMContentLoaded', () => {
+      initSupabase(SB_URL, SB_KEY);
     });
 
     function saveConfig() {
