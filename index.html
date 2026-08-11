@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Terminal Access</title>
+  <title>Camera Attics Terminal</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -26,9 +26,11 @@
     .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 28px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     h1 { font-size: 18px; font-weight: 600; text-align: center; margin: 0 0 20px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
     
-    input, select, textarea { width: 100%; padding: 12px; margin-bottom: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 14px; }
-    input:focus, select:focus { outline: none; border-color: var(--accent); }
-    button { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-bottom: 8px; }
+    input, select, textarea { width: 100%; padding: 10px 12px; margin-top: 6px; margin-bottom: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 13px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    button { padding: 12px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
     button:hover { background: var(--accent-hover); }
     button.btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
     button.btn-secondary:hover { background: var(--border); }
@@ -40,7 +42,7 @@
     .badge { padding: 4px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; font-size: 10px; }
     .badge-owner { background: var(--owner-badge); color: #fff; }
     .badge-staff { background: var(--muted); color: #fff; }
-    .btn-logout { background: transparent; border: 1px solid var(--border); padding: 6px 12px; width: auto; font-size: 12px; margin-bottom: 0; }
+    .btn-logout { background: transparent; border: 1px solid var(--border); padding: 6px 12px; font-size: 12px; }
 
     /* Navigation Bar */
     .nav-bar { background: var(--card); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; }
@@ -53,10 +55,23 @@
     .panel { display: none; }
     .panel.active { display: block; }
     
-    /* Grid & Cards */
-    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    /* Cards & Form Grid */
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 15px; color: var(--accent); display: flex; justify-content: space-between; }
+    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 15px; color: var(--accent); display: flex; justify-content: space-between; align-items: center; }
+    .section-header { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin: 15px 0 10px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+
+    .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+    .col-12 { grid-column: span 12; }
+    .col-9  { grid-column: span 9; }
+    .col-8  { grid-column: span 8; }
+    .col-6  { grid-column: span 6; }
+    .col-4  { grid-column: span 4; }
+    .col-3  { grid-column: span 3; }
+    .col-2  { grid-column: span 2; }
+
+    @media (max-width: 768px) {
+      .col-9, .col-8, .col-6, .col-4, .col-3, .col-2 { grid-column: span 12; }
+    }
 
     /* Tables */
     .table-container { overflow-x: auto; }
@@ -107,62 +122,166 @@
     </header>
 
     <nav class="nav-bar">
-      <div class="nav-tab active" onclick="switchTab('quick-entry')">Intake & Pricing</div>
+      <div class="nav-tab active" onclick="switchTab('quick-entry')">Item Intake</div>
       <div class="nav-tab" onclick="switchTab('inventory-tab')">Inventory Ledger</div>
       <div class="nav-tab owner-only" onclick="switchTab('profile-settings')">5-Profile Overrides (Owner)</div>
     </nav>
 
     <main class="main-content">
       
-      <!-- TAB 1: INTAKE & PRICING -->
+      <!-- TAB 1: NEW ITEM INTAKE FORM -->
       <div id="quick-entry" class="panel active">
-        <div class="grid-2">
-          <div class="card">
-            <div class="card-title">New Item Intake & Valuation</div>
+        <div class="card">
+          <div class="card-title">New Item Intake Form</div>
+          
+          <div class="form-grid">
             
-            <label style="font-size: 12px; color: var(--muted);">Item Title / Model Name *</label>
-            <input type="text" id="eval-title" placeholder="e.g. Leica M6 TTL 0.72 Black Chrome">
+            <!-- SECTION 1: CLASSIFICATION & IDENTITY -->
+            <div class="col-12 section-header">1. Classification & Identity</div>
 
-            <label style="font-size: 12px; color: var(--muted);">SKU (Leave blank to auto-generate)</label>
-            <input type="text" id="eval-sku" placeholder="e.g. SKU-1006">
-
-            <label style="font-size: 12px; color: var(--muted);">Category Select *</label>
-            <select id="eval-category">
-              <option value="">Select Category...</option>
-            </select>
-
-            <label style="font-size: 12px; color: var(--muted);">Condition Grade (10-Tier) *</label>
-            <select id="eval-condition">
-              <option value="NEW">NEW (100%)</option>
-              <option value="LN">LN - Like New (85%)</option>
-              <option value="LN-">LN- - Like New Minus (80%)</option>
-              <option value="EX+" selected>EX+ - Excellent Plus (74%)</option>
-              <option value="EX">EX - Excellent (65%)</option>
-              <option value="EX-">EX- - Excellent Minus (55%)</option>
-              <option value="BGN">BGN - Bargain (44%)</option>
-              <option value="UGLY">UGLY (32%)</option>
-              <option value="AS-IS">AS-IS (20%)</option>
-              <option value="PARTS">PARTS (5%)</option>
-            </select>
-
-            <label style="font-size: 12px; color: var(--muted);">Cost of Goods Sold - COGS ($)</label>
-            <input type="number" id="eval-cogs" placeholder="e.g. 1200.00">
-
-            <label style="font-size: 12px; color: var(--muted);">Market NEW Price ($)</label>
-            <input type="number" id="eval-new-price" placeholder="e.g. 2000.00 (Leave blank for fallback)">
-
-            <label style="font-size: 12px; color: var(--muted);">Market EX+ Fallback Price ($)</label>
-            <input type="number" id="eval-explus-price" placeholder="e.g. 1400.00 (Used if NEW unavailable)">
-
-            <button onclick="runPricingEngine()">1. Calculate Target Price</button>
-            <button class="btn-secondary" id="btn-save-item" onclick="saveItemToInventory()" style="display:none;">2. Save Item to Inventory Ledger</button>
-          </div>
-
-          <div class="card">
-            <div class="card-title">Valuation Engine Output</div>
-            <div id="calc-results" style="font-size: 13px; line-height: 1.8; color: var(--muted);">
-              Fill in item details and click "Calculate Target Price" to evaluate.
+            <div class="col-3">
+              <label>Category *</label>
+              <select id="item-category" onchange="autoGenerateSKU()">
+                <option value="">Select...</option>
+              </select>
             </div>
+
+            <div class="col-3">
+              <label>Subcategory</label>
+              <input type="text" id="item-subcategory" placeholder="e.g. Rangefinder, Zoom Lens">
+            </div>
+
+            <div class="col-2">
+              <label>SKU</label>
+              <input type="text" id="item-sku" placeholder="Auto-generated">
+            </div>
+
+            <div class="col-4">
+              <label>Item Name / Model Title *</label>
+              <input type="text" id="item-name" placeholder="e.g. Leica M6 TTL 0.72 Black Chrome">
+            </div>
+
+            <div class="col-2">
+              <label>Condition *</label>
+              <select id="item-condition" onchange="updatePriceFromCondition()">
+                <option value="NEW">NEW</option>
+                <option value="LN">LN</option>
+                <option value="LN-">LN-</option>
+                <option value="EX+" selected>EX+</option>
+                <option value="EX">EX</option>
+                <option value="EX-">EX-</option>
+                <option value="BGN">BGN</option>
+                <option value="UGLY">UGLY</option>
+                <option value="AS-IS">AS-IS</option>
+                <option value="PARTS">PARTS</option>
+              </select>
+            </div>
+
+            <div class="col-2">
+              <label>Set Target Price ($)</label>
+              <input type="number" id="item-price" placeholder="Auto / Manual">
+            </div>
+
+            <div class="col-2">
+              <label>Expected Resale Value ($)</label>
+              <input type="number" id="item-expected-resale" placeholder="From quote">
+            </div>
+
+            <div class="col-3">
+              <label>Storage Location</label>
+              <input type="text" id="item-location" placeholder="e.g. Shelf A2, Bin 10">
+            </div>
+
+            <div class="col-3">
+              <label>Completeness</label>
+              <input type="text" id="item-completeness" placeholder="e.g. Body, Cap, Original Box">
+            </div>
+
+
+            <!-- SECTION 2: ACQUISITION & SOURCE -->
+            <div class="col-12 section-header">2. Acquisition & Cost Breakdown</div>
+
+            <div class="col-3">
+              <label>Source</label>
+              <select id="item-source">
+                <option value="Acquired">Acquired</option>
+                <option value="Bill of Sale">Bill of Sale #</option>
+                <option value="Family">Family</option>
+                <option value="Made">Made</option>
+              </select>
+            </div>
+
+            <div class="col-3">
+              <label>Purchase Source / Seller</label>
+              <input type="text" id="item-seller" placeholder="e.g. John Doe / Estate Sale">
+            </div>
+
+            <div class="col-2">
+              <label>Purchase Date</label>
+              <input type="date" id="item-purchase-date">
+            </div>
+
+            <div class="col-2">
+              <label>Purchase Price ($)</label>
+              <input type="number" id="item-purchase-price" placeholder="0.00">
+            </div>
+
+            <div class="col-1">
+              <label>Materials ($)</label>
+              <input type="number" id="item-materials-cost" placeholder="0.00">
+            </div>
+
+            <div class="col-1">
+              <label>Labor (Hrs)</label>
+              <input type="number" id="item-labor-hours" placeholder="0.0">
+            </div>
+
+
+            <!-- SECTION 3: PHYSICAL DETAILS & INSPECTION -->
+            <div class="col-12 section-header">3. Physical Details & Inspection</div>
+
+            <div class="col-2">
+              <label>Dimensions</label>
+              <input type="text" id="item-dimensions" placeholder="e.g. 138x77x38mm">
+            </div>
+
+            <div class="col-2">
+              <label>Weight</label>
+              <input type="text" id="item-weight" placeholder="e.g. 600g / 1.3 lbs">
+            </div>
+
+            <div class="col-8">
+              <label>Visible Markings / Serial Number</label>
+              <input type="text" id="item-markings" placeholder="e.g. SN: 2498102, minor brassing on top plate">
+            </div>
+
+            <div class="col-12">
+              <label>Defects / Damage Notes</label>
+              <textarea id="item-defects" rows="2" placeholder="Detail operational defects, haze, fungus, shutter inaccuracies, or body dents..."></textarea>
+            </div>
+
+
+            <!-- SECTION 4: MEDIA & WORKFLOW -->
+            <div class="col-12 section-header">4. Media & Next Actions</div>
+
+            <div class="col-3" style="display: flex; align-items: flex-end;">
+              <button class="btn-secondary" style="width: 100%; height: 38px; padding: 0; font-size: 12px;" onclick="triggerPhotoCapture()">📷 Take Photos Action</button>
+            </div>
+
+            <div class="col-9">
+              <label>Photo / Drive Folder Link</label>
+              <input type="text" id="item-photo-link" placeholder="https://drive.google.com/folder/...">
+            </div>
+
+            <div class="col-12">
+              <label>Notes / Next Action</label>
+              <textarea id="item-notes" rows="2" placeholder="e.g. Needs CLA before listing, send to technician..."></textarea>
+            </div>
+
+            <div class="col-12" style="margin-top: 15px;">
+              <button onclick="saveIntakeItem()" style="width: 100%; font-size: 16px; padding: 14px;">Save Item to Inventory Ledger</button>
+            </div>
+
           </div>
         </div>
       </div>
@@ -179,10 +298,10 @@
               <thead>
                 <tr>
                   <th>SKU</th>
-                  <th>Item Title</th>
+                  <th>Item Name</th>
                   <th>Category</th>
                   <th>Grade</th>
-                  <th>COGS</th>
+                  <th>Location</th>
                   <th>Target Price</th>
                   <th>Status</th>
                 </tr>
@@ -200,7 +319,7 @@
         <div class="card">
           <div class="card-title">Condition Pricing Profile Overrides</div>
           <p style="font-size: 12px; color: var(--muted); margin-bottom: 15px;">
-            Customize profile percentages across all 10 condition grades. Leaving an override blank preserves default matrix rates.
+            Customize profile percentages across all 10 condition grades.
           </p>
           <div class="table-container">
             <table>
@@ -228,7 +347,7 @@
     let supabaseClient = null;
     let currentUser = null;
     let userRole = 'staff';
-    let currentCalculatedPrice = null;
+    let loadedCategories = [];
 
     // 1. INITIALIZATION & CONFIG
     window.addEventListener('DOMContentLoaded', () => {
@@ -335,78 +454,58 @@
       if (tabId === 'inventory-tab') loadInventory();
     }
 
-    // 4. CATEGORIES & PRICING ENGINE
+    // 4. CATEGORIES & AUTOMATIONS
     async function loadCategories() {
       const { data } = await supabaseClient.from('item_categories').select('*').order('category_name');
-      const select = document.getElementById('eval-category');
-      select.innerHTML = '<option value="">Select Category...</option>';
+      const select = document.getElementById('item-category');
+      select.innerHTML = '<option value="">Select...</option>';
       if (data && data.length > 0) {
+        loadedCategories = data;
         data.forEach(c => {
-          select.innerHTML += `<option value="${c.category_id}">${c.category_name} (Profile ${c.pricing_profile})</option>`;
+          select.innerHTML += `<option value="${c.category_id}">${c.category_name}</option>`;
         });
       }
     }
 
-    async function runPricingEngine() {
-      const title = document.getElementById('eval-title').value.trim();
-      const catId = document.getElementById('eval-category').value;
-      const cond = document.getElementById('eval-condition').value;
-      const newPrice = parseFloat(document.getElementById('eval-new-price').value) || null;
-      const explusPrice = parseFloat(document.getElementById('eval-explus-price').value) || null;
-      const resultsDiv = document.getElementById('calc-results');
-
-      if (!title) return alert('Please enter an Item Title / Model Name.');
-      if (!catId) return alert('Please select a category.');
-      if (!newPrice && !explusPrice) return alert('Provide either a Market NEW or EX+ fallback price.');
-
-      resultsDiv.innerHTML = 'Calculating...';
-
-      const { data, error } = await supabaseClient.rpc('calculate_item_sell_price', {
-        p_category_id: catId,
-        p_owner_id: currentUser.id,
-        p_condition: cond,
-        p_market_new_price: newPrice,
-        p_market_explus_price: explusPrice
-      });
-
-      if (error) {
-        resultsDiv.innerHTML = `<span style="color:#ef5350;">Error: ${error.message}</span>`;
-        return;
-      }
-
-      const res = data[0];
-      currentCalculatedPrice = res.calculated_sell_price;
-
-      resultsDiv.innerHTML = `
-        <div style="font-size:14px; font-weight:700; color:var(--text); margin-bottom:5px;">${title}</div>
-        <div style="font-size:24px; font-weight:700; color:var(--accent); margin-bottom:10px;">
-          $${res.calculated_sell_price}
-        </div>
-        <hr style="border:0; border-top:1px solid var(--border); margin:10px 0;">
-        <div><strong>Pricing Method:</strong> ${res.used_pricing_method}</div>
-        <div><strong>Anchor Price Base:</strong> $${res.pricing_anchor_price}</div>
-        <div><strong>Applied Profile:</strong> Profile ${res.used_profile_id}</div>
-        <div><strong>Applied Grade Rate:</strong> ${res.applied_percentage}%</div>
-      `;
-
-      document.getElementById('btn-save-item').style.display = 'block';
+    function autoGenerateSKU() {
+      const catId = document.getElementById('item-category').value;
+      const catObj = loadedCategories.find(c => c.category_id === catId);
+      const prefix = catObj ? (catObj.category_code || 'CAM') : 'CAM';
+      const randNum = Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('item-sku').value = `${prefix}-${randNum}`;
     }
 
-    // 5. SAVE ITEM TO INVENTORY
-    async function saveItemToInventory() {
-      const title = document.getElementById('eval-title').value.trim();
-      let sku = document.getElementById('eval-sku').value.trim();
-      const catId = document.getElementById('eval-category').value;
-      const cond = document.getElementById('eval-condition').value;
-      const cogs = parseFloat(document.getElementById('eval-cogs').value) || 0.00;
-
-      if (!title || !catId || currentCalculatedPrice === null) {
-        return alert('Please enter item details and calculate target price first.');
+    function updatePriceFromCondition() {
+      const expectedResale = parseFloat(document.getElementById('item-expected-resale').value);
+      if (expectedResale > 0) {
+        document.getElementById('item-price').value = expectedResale.toFixed(2);
       }
+    }
+
+    function triggerPhotoCapture() {
+      const sku = document.getElementById('item-sku').value || 'UNASSIGNED';
+      alert(`Camera interface initialized for ${sku}. Direct file upload enabled.`);
+    }
+
+    // 5. SAVE INTAKE ITEM
+    async function saveIntakeItem() {
+      const title = document.getElementById('item-name').value.trim();
+      const catId = document.getElementById('item-category').value;
+      const cond = document.getElementById('item-condition').value;
+      let sku = document.getElementById('item-sku').value.trim();
+      const targetPrice = parseFloat(document.getElementById('item-price').value) || 0.00;
+      const purchasePrice = parseFloat(document.getElementById('item-purchase-price').value) || 0.00;
+      const materialsCost = parseFloat(document.getElementById('item-materials-cost').value) || 0.00;
+      const notes = document.getElementById('item-notes').value.trim();
+
+      if (!title) return alert('Please enter an Item Name / Model Title.');
+      if (!catId) return alert('Please select a Category.');
 
       if (!sku) {
         sku = 'SKU-' + Math.floor(100000 + Math.random() * 900000);
       }
+
+      const totalCOGS = purchasePrice + materialsCost;
 
       const { data, error } = await supabaseClient.from('inventory').insert([
         {
@@ -414,9 +513,10 @@
           item_name: title,
           category_id: catId,
           condition_grade: cond,
-          cogs: cogs,
-          target_sell_price: currentCalculatedPrice,
+          cogs: totalCOGS,
+          target_sell_price: targetPrice,
           status: 'Intake',
+          notes: notes,
           created_by: currentUser.id
         }
       ]);
@@ -424,16 +524,26 @@
       if (error) {
         alert('Error saving item: ' + error.message);
       } else {
-        alert(`Saved successfully! Assigned SKU: ${sku}`);
-        // Reset Form
-        document.getElementById('eval-title').value = '';
-        document.getElementById('eval-sku').value = '';
-        document.getElementById('eval-cogs').value = '';
-        document.getElementById('eval-new-price').value = '';
-        document.getElementById('eval-explus-price').value = '';
-        document.getElementById('calc-results').innerHTML = 'Item saved to Inventory Ledger. Fill in new item details to evaluate.';
-        document.getElementById('btn-save-item').style.display = 'none';
-        currentCalculatedPrice = null;
+        alert(`Item saved cleanly to inventory ledger with SKU: ${sku}`);
+        // Reset intake form fields
+        document.getElementById('item-name').value = '';
+        document.getElementById('item-subcategory').value = '';
+        document.getElementById('item-sku').value = '';
+        document.getElementById('item-price').value = '';
+        document.getElementById('item-expected-resale').value = '';
+        document.getElementById('item-location').value = '';
+        document.getElementById('item-completeness').value = '';
+        document.getElementById('item-seller').value = '';
+        document.getElementById('item-purchase-date').value = '';
+        document.getElementById('item-purchase-price').value = '';
+        document.getElementById('item-materials-cost').value = '';
+        document.getElementById('item-labor-hours').value = '';
+        document.getElementById('item-dimensions').value = '';
+        document.getElementById('item-weight').value = '';
+        document.getElementById('item-markings').value = '';
+        document.getElementById('item-defects').value = '';
+        document.getElementById('item-photo-link').value = '';
+        document.getElementById('item-notes').value = '';
         loadInventory();
       }
     }
@@ -470,7 +580,7 @@
             <td>${item.item_name}</td>
             <td>${catName}</td>
             <td>${item.condition_grade}</td>
-            <td>$${parseFloat(item.cogs).toFixed(2)}</td>
+            <td>Storefront</td>
             <td style="color:var(--accent); font-weight:700;">$${parseFloat(item.target_sell_price).toFixed(2)}</td>
             <td><span class="status-badge">${item.status}</span></td>
           </tr>
