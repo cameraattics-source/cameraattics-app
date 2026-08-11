@@ -27,6 +27,17 @@
     h1 { font-size: 18px; font-weight: 600; text-align: center; margin: 0 0 20px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
     
     input, select, textarea { width: 100%; padding: 10px 12px; margin-top: 6px; margin-bottom: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 13px; }
+    
+    /* REMOVE SPINNER/TOGGLES ON NUMBER INPUTS */
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
     label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
     
@@ -476,7 +487,7 @@
 
     function autoGenerateSKU() {
       const currentSKU = document.getElementById('item-sku').value.trim();
-      if (currentSKU) return; // Preserve manual SKU entry
+      if (currentSKU) return;
       const catId = document.getElementById('item-category').value;
       const catObj = loadedCategories.find(c => c.category_id === catId);
       const prefix = catObj ? (catObj.category_code || 'CAM') : 'CAM';
@@ -484,12 +495,11 @@
       document.getElementById('item-sku').value = `${prefix}-${randNum}`;
     }
 
-    // LOOKUP SKU FROM DATABASE (AUTO-FILL ALL FIELDS)
     async function lookupSKU() {
       const sku = document.getElementById('item-sku').value.trim();
       if (!sku) return;
 
-      const { data, error } = await supabaseClient
+      const { data } = await supabaseClient
         .from('inventory')
         .select('*')
         .eq('sku', sku)
@@ -505,7 +515,6 @@
       }
     }
 
-    // LOOKUP BILL OF SALE DATA
     async function lookupBillOfSale() {
       const bosNumber = document.getElementById('item-bill-of-sale').value.trim();
       if (!bosNumber) return;
@@ -563,7 +572,6 @@
         alert('Error saving item: ' + error.message);
       } else {
         alert(`Item saved cleanly to inventory ledger with SKU: ${sku}`);
-        // Reset intake form fields
         document.getElementById('item-name').value = '';
         document.getElementById('item-subcategory').value = '';
         document.getElementById('item-sku').value = '';
