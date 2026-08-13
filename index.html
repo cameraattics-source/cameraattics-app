@@ -39,8 +39,7 @@
 
     /* Grid & Pane Architecture */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-    @media (max-width: 1024px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+    @media (max-width: 1024px) { .grid-2 { grid-template-columns: 1fr; } }
 
     .pane { background: var(--card); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .pane-title { font-size: 12px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 8px; margin: 0; }
@@ -64,9 +63,10 @@
     /* Title Autocomplete with Dropdown Arrow */
     .input-with-arrow { position: relative; display: flex; align-items: center; }
     .dropdown-arrow-btn { position: absolute; right: 4px; background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px 8px; font-size: 10px; }
-    .autocomplete-box { position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background: var(--card); border: 1px solid var(--accent); border-radius: 6px; max-height: 200px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.8); }
-    .autocomplete-item { padding: 8px 12px; border-bottom: 1px solid var(--card-border); cursor: pointer; font-size: 11px; display: flex; justify-content: space-between; }
-    .autocomplete-item:hover { background: var(--card-border); }
+    .autocomplete-box { position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background: var(--card); border: 1px solid var(--accent); border-radius: 6px; max-height: 220px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.85); margin-top: 2px; }
+    .autocomplete-item { padding: 8px 12px; border-bottom: 1px solid var(--card-border); cursor: pointer; font-size: 11px; display: flex; justify-content: space-between; align-items: center; }
+    .autocomplete-item:hover { background: rgba(212, 84, 50, 0.15); }
+    .autocomplete-item .item-price { font-weight: 800; color: var(--accent); font-size: 11px; }
 
     /* Character Counter Badge */
     .char-counter { font-size: 10px; font-weight: 700; color: var(--success); }
@@ -102,10 +102,6 @@
     .btn-secondary { background: transparent; border: 1px solid var(--card-border); color: var(--text); }
     .btn-secondary:hover { background: var(--card-border); }
 
-    /* Modals */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-    .modal-card { background: var(--card); border: 1px solid var(--accent); border-radius: 8px; padding: 20px; max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 14px; }
-
     .seller-mode-active .internal-metric { display: none !important; }
     .hidden { display: none !important; }
   </style>
@@ -127,12 +123,12 @@
     </div>
   </header>
 
-  <!-- TAB 1: EXPRESS INTAKE (DIRECT-TO-MASTER WITH ALL CATCHES & GUARDS) -->
+  <!-- TAB 1: EXPRESS INTAKE (WITH WORKING TYPEAHEAD & LOCAL BENCHMARK FALLBACK) -->
   <main id="tab-express" class="tab-content active">
     <div class="pane">
       <div class="pane-title">
         <span>⚡ Express Intake (Direct to Master Inventory)</span>
-        <span style="font-size: 11px; color: var(--accent);" id="express-sku-display">SKU: CAM-1042</span>
+        <span style="font-size: 11px; color: var(--accent);" id="express-sku-display">SKU: CAM-AUTO</span>
       </div>
 
       <div class="form-grid">
@@ -145,8 +141,6 @@
             <option value="JWL" data-scale="GENERIC">Jewelry & Watches (JWL)</option>
             <option value="CNS" data-scale="NUMISMATIC">Coins & Currency (CNS)</option>
             <option value="BK" data-scale="BOOKS">Antiquarian Books (BK)</option>
-            <option value="VIN" data-scale="VINYL">Vinyl Records (VIN)</option>
-            <option value="CMC" data-scale="COMICS">Comic Books (CMC)</option>
           </select>
         </div>
 
@@ -165,15 +159,15 @@
           </select>
         </div>
 
-        <!-- Title with Live 80-Char Counter & Lookup Arrow -->
+        <!-- Live Typeahead Input for Title -->
         <div class="col-12" style="position:relative;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
             <label style="margin: 0;">Item Name / Model Title (eBay 80-Char Max) *</label>
-            <span class="char-counter" id="title-char-counter">80 left</span>
+            <span class="char-counter" id="express-char-counter">80 left</span>
           </div>
           <div class="input-with-arrow">
-            <input type="text" id="express-title" maxlength="80" placeholder="e.g. Vintage Nikon F3 35mm SLR Film Camera Body with 50mm f/1.4 Lens" oninput="onExpressTitleInput(this)">
-            <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete()">▼</button>
+            <input type="text" id="express-title" maxlength="80" placeholder="Start typing model title (e.g. Nikon F3, Canon AE-1, Morgan Dollar)..." oninput="onExpressTitleInput(this)">
+            <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete('express')">▼</button>
           </div>
           <div id="express-autocomplete" class="autocomplete-box hidden"></div>
         </div>
@@ -302,6 +296,7 @@
               <option value="CAM">Cameras & Photo (CAM)</option>
               <option value="JWL">Fine Jewelry & Watches (JWL)</option>
               <option value="CNS">Coins & Currency (CNS)</option>
+              <option value="OPT">Binoculars & Telescopes (OPT)</option>
             </select>
           </div>
           <div class="col-6">
@@ -309,9 +304,14 @@
             <input type="text" id="quote-subcategory" placeholder="e.g. Rangefinder">
           </div>
 
-          <div class="col-12">
+          <!-- Live Typeahead Input for Quote Title -->
+          <div class="col-12" style="position:relative;">
             <label>Item Name / Title *</label>
-            <input type="text" id="quote-title" placeholder="Type model name...">
+            <div class="input-with-arrow">
+              <input type="text" id="quote-title" placeholder="Type model title (e.g. Leica M6, Nikon F3, Morgan Dollar)..." oninput="onQuoteTitleInput(this)">
+              <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete('quote')">▼</button>
+            </div>
+            <div id="quote-autocomplete" class="autocomplete-box hidden"></div>
           </div>
 
           <div class="col-6">
@@ -549,35 +549,31 @@
     </div>
   </main>
 
-  <!-- SKU RE-PRINT APPROVAL MODAL -->
-  <div id="reprint-modal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div style="font-size: 14px; font-weight: 800; color: var(--warning);">⚠️ SKU CATEGORY CHANGE WARNING</div>
-      <p style="font-size: 12px; margin: 0; color: var(--text);">
-        Category changed for existing item. A physical barcode label was already printed for <strong id="modal-old-sku">CAM-1042</strong>.
-      </p>
-      <div style="display: flex; gap: 8px;">
-        <button class="btn btn-secondary" style="flex: 1;" onclick="closeReprintModal(false)">Keep Existing SKU (CAM-1042)</button>
-        <button class="btn btn-warning" style="flex: 1;" onclick="closeReprintModal(true)">Generate New SKU & Queue Label</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // Master State Data
-    let isExpressPriceDirty = false;
-    let isSellerView = false;
-    let expressHeroIndex = 0;
-    let quoteList = [];
-    let expressStaticResale = 250.00;
+    // Embedded Catalog Benchmark Dataset (Offline Fallback & Instant Typeahead Database)
+    const MOCK_CATALOG = [
+      { title: "Nikon F3 35mm SLR Film Camera Body", category: "CAM", subcategory: "35mm SLR", resale: 280.00, min: 220.00, max: 340.00 },
+      { title: "Nikon F2 Photomic 35mm SLR Camera", category: "CAM", subcategory: "35mm SLR", resale: 200.00, min: 150.00, max: 260.00 },
+      { title: "Canon AE-1 Program 35mm SLR Camera", category: "CAM", subcategory: "35mm SLR", resale: 165.00, min: 120.00, max: 210.00 },
+      { title: "Leica M6 35mm Rangefinder Camera Body", category: "CAM", subcategory: "Rangefinder", resale: 2450.00, min: 2100.00, max: 2850.00 },
+      { title: "Olympus OM-1 35mm SLR Camera Body", category: "CAM", subcategory: "35mm SLR", resale: 140.00, min: 100.00, max: 180.00 },
+      { title: "Minolta X-700 35mm SLR Camera Body", category: "CAM", subcategory: "35mm SLR", resale: 125.00, min: 90.00, max: 160.00 },
+      { title: "Morgan Silver Dollar (1878-1921) VF/EF", category: "CNS", subcategory: "Silver Dollars", resale: 38.00, min: 32.00, max: 45.00 },
+      { title: "Peace Silver Dollar (1921-1935) AU/MS", category: "CNS", subcategory: "Silver Dollars", resale: 35.00, min: 28.00, max: 42.00 },
+      { title: "Rolex Submariner Date 16610 Steel", category: "JWL", subcategory: "Luxury Watches", resale: 8500.00, min: 7800.00, max: 9400.00 },
+      { title: "Bushnell 10x42 Waterproof Binoculars", category: "OPT", subcategory: "Binoculars", resale: 65.00, min: 45.00, max: 85.00 }
+    ];
 
     const DYNAMIC_CONDITION_SCALES = {
       GENERIC: ['NEW', 'LN', 'LN-', 'EX+', 'EX', 'EX-', 'BGN', 'UGLY', 'AS-IS', 'PARTS'],
       NUMISMATIC: ['MS-70', 'MS-65', 'MS-60', 'AU-50', 'EF-40', 'VF-20', 'F-12', 'VG-8', 'G-4', 'PR-Proof'],
-      BOOKS: ['Fine', 'Very Good', 'Good', 'Fair', 'Poor', 'Ex-Library'],
-      VINYL: ['Mint (M)', 'Near Mint (NM)', 'Very Good Plus (VG+)', 'Very Good (VG)', 'Good (G)', 'Poor (P)'],
-      COMICS: ['9.8 Near Mint', '9.0 Very Fine', '7.5 Fine', '6.0 Very Good', '4.0 Good', '1.0 Fair']
+      BOOKS: ['Fine', 'Very Good', 'Good', 'Fair', 'Poor', 'Ex-Library']
     };
+
+    let isExpressPriceDirty = false;
+    let isSellerView = false;
+    let quoteList = [];
+    let quoteCurrentResale = 250.00;
 
     window.addEventListener('DOMContentLoaded', () => {
       onExpressCategoryChange();
@@ -596,7 +592,83 @@
       document.getElementById('btn-seller-flip').innerText = isSellerView ? '🔒 Exit Seller View' : '👁️ Flip to Seller View';
     }
 
-    // Tab 1: Express Intake Functions
+    // --- TYPEAHEAD / AUTOCOMPLETE ENGINE ---
+    function onExpressTitleInput(input) {
+      const remaining = 80 - input.value.length;
+      const counter = document.getElementById('express-char-counter');
+      counter.innerText = `${remaining} left`;
+      counter.className = `char-counter ${remaining < 15 ? (remaining < 5 ? 'danger' : 'warn') : ''}`;
+
+      renderAutocomplete('express', input.value.trim());
+    }
+
+    function onQuoteTitleInput(input) {
+      renderAutocomplete('quote', input.value.trim());
+    }
+
+    function renderAutocomplete(context, query) {
+      const box = document.getElementById(`${context}-autocomplete`);
+      if (!query || query.length < 2) {
+        box.classList.add('hidden');
+        return;
+      }
+
+      const matches = MOCK_CATALOG.filter(item => 
+        item.title.toLowerCase().includes(query.toLowerCase())
+      );
+
+      if (matches.length === 0) {
+        box.classList.add('hidden');
+        return;
+      }
+
+      box.innerHTML = '';
+      matches.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'autocomplete-item';
+        div.innerHTML = `
+          <div>
+            <strong>${item.title}</strong>
+            <div style="font-size:9px; color:var(--muted);">${item.category} / ${item.subcategory}</div>
+          </div>
+          <div class="item-price">$${item.resale.toFixed(2)}</div>
+        `;
+        div.onclick = () => selectCatalogMatch(context, item);
+        box.appendChild(div);
+      });
+
+      box.classList.remove('hidden');
+    }
+
+    function toggleTitleAutocomplete(context) {
+      const input = document.getElementById(`${context}-title`);
+      renderAutocomplete(context, input.value.trim() || 'a'); // trigger dropdown on click
+    }
+
+    function selectCatalogMatch(context, item) {
+      document.getElementById(`${context}-title`).value = item.title;
+      document.getElementById(`${context}-autocomplete`).classList.add('hidden');
+
+      if (context === 'express') {
+        document.getElementById('express-category').value = item.category;
+        document.getElementById('express-subcategory').value = item.subcategory;
+        document.getElementById('express-price-resale').value = item.resale.toFixed(2);
+        document.getElementById('express-price-min').value = item.min.toFixed(2);
+        document.getElementById('express-price-max').value = item.max.toFixed(2);
+        isExpressPriceDirty = false;
+        document.getElementById('dirty-price-tag').classList.add('hidden');
+        onExpressCategoryChange();
+        recalculateExpressPrices();
+      } else if (context === 'quote') {
+        document.getElementById('quote-category').value = item.category;
+        document.getElementById('quote-subcategory').value = item.subcategory;
+        quoteCurrentResale = item.resale;
+        document.getElementById('quote-static-resale').innerText = `$${item.resale.toFixed(2)}`;
+        syncQuoteFromPct();
+      }
+    }
+
+    // --- TAB 1: EXPRESS INTAKE LOGIC ---
     function onExpressCategoryChange() {
       const select = document.getElementById('express-category');
       const selectedOpt = select.options[select.selectedIndex];
@@ -611,13 +683,6 @@
       (DYNAMIC_CONDITION_SCALES[scaleKey] || DYNAMIC_CONDITION_SCALES.GENERIC).forEach(opt => {
         condSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
       });
-    }
-
-    function onExpressTitleInput(input) {
-      const remaining = 80 - input.value.length;
-      const counter = document.getElementById('title-char-counter');
-      counter.innerText = `${remaining} left`;
-      counter.className = `char-counter ${remaining < 15 ? (remaining < 5 ? 'danger' : 'warn') : ''}`;
     }
 
     function checkDuplicateSN(sn) {
@@ -656,7 +721,7 @@
       const purchase = parseFloat(document.getElementById('express-cogs-purchase').value) || 0;
       const materials = parseFloat(document.getElementById('express-cogs-materials').value) || 0;
       const labor = parseFloat(document.getElementById('express-cogs-labor').value) || 0;
-      const total = purchase + materials + (labor * 25.00); // $25/hr labor rate
+      const total = purchase + materials + (labor * 25.00);
       document.getElementById('express-cogs-total').value = `$${total.toFixed(2)}`;
     }
 
@@ -666,7 +731,6 @@
         if (i === index) t.classList.add('is-hero');
         else t.classList.remove('is-hero');
       });
-      expressHeroIndex = index;
     }
 
     function toggleLotMode(isLot) {
@@ -689,15 +753,22 @@
       onExpressTitleInput(document.getElementById('express-title'));
     }
 
-    // Tab 2: Quote Synchronizer & Driver License Capture
+    // --- TAB 2: QUOTE HUB LOGIC ---
+    function onQuoteCategoryChange() {
+      const cat = document.getElementById('quote-category').value;
+      const flag = document.getElementById('quote-review-flag');
+      if (cat === 'JWL' || cat === 'CNS') flag.classList.remove('hidden');
+      else flag.classList.add('hidden');
+    }
+
     function syncQuoteFromPct() {
       const pct = parseFloat(document.getElementById('quote-offer-pct').value) || 0;
-      document.getElementById('quote-offer-amt').value = (expressStaticResale * (pct / 100)).toFixed(2);
+      document.getElementById('quote-offer-amt').value = (quoteCurrentResale * (pct / 100)).toFixed(2);
     }
 
     function syncQuoteFromAmt() {
       const amt = parseFloat(document.getElementById('quote-offer-amt').value) || 0;
-      document.getElementById('quote-offer-pct').value = ((amt / expressStaticResale) * 100).toFixed(0);
+      document.getElementById('quote-offer-pct').value = ((amt / quoteCurrentResale) * 100).toFixed(0);
     }
 
     function roundQuoteOffer(step) {
@@ -717,7 +788,7 @@
 
       if (!title) return alert('Enter item title.');
 
-      quoteList.push({ title, cond, resale: expressStaticResale, offer: amt });
+      quoteList.push({ title, cond, resale: quoteCurrentResale, offer: amt });
       renderQuoteList();
       document.getElementById('quote-title').value = '';
     }
@@ -763,17 +834,9 @@
       renderQuoteList();
     }
 
-    function processBatchStagingActions() {
-      alert('Executing batch actions on staged items: Move to Master & Queue Labels.');
-    }
-
-    function exportVoolistCSV() {
-      alert('Generating Voolist-formatted CSV export for all items with Status = "Ready to List"...');
-    }
-
-    function printLabelsQueue() {
-      alert('Generating PDF print queue with scannable QR labels...');
-    }
+    function processBatchStagingActions() { alert('Executing batch actions on staged items.'); }
+    function exportVoolistCSV() { alert('Exporting Voolist CSV...'); }
+    function printLabelsQueue() { alert('Generating PDF label print queue...'); }
   </script>
 </body>
 </html>
