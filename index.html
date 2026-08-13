@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Camera Attics - Master Estate Terminal</title>
+  <title>Camera Attics - Master Terminal Baseline</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -17,13 +17,13 @@
       --success: #2E7D32;
       --warning: #F57C00;
       --danger: #C62828;
-      --info: #0288D1;
+      --readonly-bg: #1A2232;
     }
 
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* Application Header */
+    /* Header & Navigation */
     .app-header { background: var(--card); border-bottom: 1px solid var(--card-border); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
     .brand { font-size: 15px; font-weight: 800; letter-spacing: 1.5px; color: var(--text); padding: 14px 0; }
     .brand span { color: var(--accent); }
@@ -33,19 +33,18 @@
     .nav-tab:hover { color: var(--text); }
     .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(212, 84, 50, 0.05); }
 
-    /* Workspace Container */
-    .tab-content { display: none; padding: 16px; flex: 1; max-width: 1700px; margin: 0 auto; width: 100%; }
+    /* Workspace */
+    .tab-content { display: none; padding: 16px; max-width: 1700px; margin: 0 auto; width: 100%; }
     .tab-content.active { display: block; }
 
-    /* Grid & Pane Architecture */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 1024px) { .grid-2 { grid-template-columns: 1fr; } }
 
     .pane { background: var(--card); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .pane-title { font-size: 12px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 8px; margin: 0; }
 
-    /* Form Fields & Compact Layouts */
-    .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 8px; align-items: center; }
+    /* Layout & Sizing */
+    .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; align-items: center; }
     .col-12 { grid-column: span 12; }
     .col-8  { grid-column: span 8; }
     .col-6  { grid-column: span 6; }
@@ -53,86 +52,66 @@
     .col-3  { grid-column: span 3; }
     .col-2  { grid-column: span 2; }
 
-    label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 3px; }
-    input, select, textarea { width: 100%; padding: 7px 9px; background: var(--bg); border: 1px solid var(--card-border); border-radius: 4px; color: #fff; font-size: 12px; }
+    label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
+    input, select, textarea { width: 100%; padding: 8px 10px; background: var(--bg); border: 1px solid var(--card-border); border-radius: 4px; color: #fff; font-size: 12px; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
 
-    .input-mini { max-width: 75px; text-align: center; font-weight: 700; }
-    .input-compact { max-width: 110px; font-weight: 700; }
-
-    /* Title Autocomplete with Dropdown Arrow */
+    /* Standardized 85 Character Title Container */
+    .title-field-container { max-width: 85ch; width: 100%; position: relative; }
     .input-with-arrow { position: relative; display: flex; align-items: center; }
     .dropdown-arrow-btn { position: absolute; right: 4px; background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px 8px; font-size: 10px; }
     .autocomplete-box { position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background: var(--card); border: 1px solid var(--accent); border-radius: 6px; max-height: 220px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.85); margin-top: 2px; }
     .autocomplete-item { padding: 8px 12px; border-bottom: 1px solid var(--card-border); cursor: pointer; font-size: 11px; display: flex; justify-content: space-between; align-items: center; }
     .autocomplete-item:hover { background: rgba(212, 84, 50, 0.15); }
-    .autocomplete-item .item-price { font-weight: 800; color: var(--accent); font-size: 11px; }
+
+    /* Unchangeable Calculated Price Displays */
+    .price-display-box { background: var(--readonly-bg); border: 1px solid var(--card-border); border-radius: 6px; padding: 10px; text-align: center; }
+    .price-display-label { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 2px; }
+    .price-display-value { font-size: 18px; font-weight: 800; color: #FFF; }
+    .price-display-value.buy-target { color: var(--accent); }
 
     /* Character Counter Badge */
     .char-counter { font-size: 10px; font-weight: 700; color: var(--success); }
     .char-counter.warn { color: var(--warning); }
     .char-counter.danger { color: var(--danger); }
 
-    /* Intelligence & Alert Badges */
-    .intel-panel { background: rgba(9, 12, 16, 0.8); border: 1px solid var(--card-border); border-radius: 6px; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 8px; }
-    .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px; }
-    .badge-hot { background: rgba(212, 84, 50, 0.2); color: var(--accent); border: 1px solid var(--accent); }
-    .badge-stock { background: rgba(245, 124, 0, 0.2); color: var(--warning); border: 1px solid var(--warning); }
-    .badge-conf { background: rgba(46, 125, 50, 0.2); color: var(--success); border: 1px solid var(--success); }
-    .badge-review { background: rgba(142, 36, 170, 0.2); color: #D1C4E9; border: 1px solid #8E24AA; }
-
-    /* Hero Image Photo Grid */
-    .photo-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 6px; }
-    .photo-thumb { aspect-ratio: 1; background: var(--bg); border: 1px solid var(--card-border); border-radius: 4px; position: relative; cursor: pointer; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted); }
-    .photo-thumb.is-hero { border: 2px solid var(--accent); }
-    .photo-thumb.is-hero::after { content: "⭐ HERO"; position: absolute; top: 2px; left: 2px; background: var(--accent); color: #fff; font-size: 8px; font-weight: 800; padding: 1px 4px; border-radius: 2px; }
-
-    /* Tables */
+    /* Tables & Buttons */
     .data-table { width: 100%; border-collapse: collapse; font-size: 11px; }
     .data-table th { background: var(--bg); color: var(--muted); padding: 8px; text-align: left; border-bottom: 1px solid var(--card-border); font-size: 9px; text-transform: uppercase; }
     .data-table td { padding: 8px; border-bottom: 1px solid var(--card-border); vertical-align: middle; }
 
-    /* Buttons & Controls */
-    .btn { padding: 7px 12px; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+    .btn { padding: 8px 14px; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
     .btn-accent { background: var(--accent); color: #fff; }
     .btn-accent:hover { background: var(--accent-hover); }
-    .btn-success { background: var(--success); color: #fff; }
-    .btn-warning { background: var(--warning); color: #fff; }
-    .btn-danger { background: var(--danger); color: #fff; }
     .btn-secondary { background: transparent; border: 1px solid var(--card-border); color: var(--text); }
     .btn-secondary:hover { background: var(--card-border); }
 
-    .seller-mode-active .internal-metric { display: none !important; }
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- MASTER HEADER & TAB NAVIGATION -->
+  <!-- MASTER NAVIGATION -->
   <header class="app-header">
     <div class="brand">📷 <span>CAMERA ATTICS</span> MASTER TERMINAL</div>
     <nav class="nav-tabs">
-      <button class="nav-tab active" onclick="switchTab('tab-express')">⚡ Express Intake</button>
-      <button class="nav-tab" onclick="switchTab('tab-quote')">🤝 Dual-Pane Buying & Quote Hub</button>
-      <button class="nav-tab" onclick="switchTab('tab-staging')">⏳ In-Process Staging</button>
-      <button class="nav-tab" onclick="switchTab('tab-inventory')">📦 Master Inventory & CSV</button>
-      <button class="nav-tab" onclick="switchTab('tab-settings')">⚙️ Settings & Taxonomy</button>
+      <button class="nav-tab active" onclick="switchTab('tab-express', this)">⚡ Express Intake</button>
+      <button class="nav-tab" onclick="switchTab('tab-quote', this)">🤝 Dual-Pane Buying & Quote Hub</button>
+      <button class="nav-tab" onclick="switchTab('tab-staging', this)">⏳ In-Process Staging</button>
+      <button class="nav-tab" onclick="switchTab('tab-inventory', this)">📦 Master Inventory</button>
+      <button class="nav-tab" onclick="switchTab('tab-settings', this)">⚙️ Settings & Matrix</button>
     </nav>
-    <div>
-      <button class="btn btn-secondary" id="btn-seller-flip" onclick="toggleSellerFlip()">👁️ Flip to Seller View</button>
-    </div>
   </header>
 
-  <!-- TAB 1: EXPRESS INTAKE (WITH WORKING TYPEAHEAD & LOCAL BENCHMARK FALLBACK) -->
+  <!-- TAB 1: EXPRESS INTAKE -->
   <main id="tab-express" class="tab-content active">
     <div class="pane">
       <div class="pane-title">
-        <span>⚡ Express Intake (Direct to Master Inventory)</span>
+        <span>⚡ Express Intake</span>
         <span style="font-size: 11px; color: var(--accent);" id="express-sku-display">SKU: CAM-AUTO</span>
       </div>
 
       <div class="form-grid">
-        <!-- Classification -->
         <div class="col-4">
           <label>Category *</label>
           <select id="express-category" onchange="onExpressCategoryChange()">
@@ -146,7 +125,7 @@
 
         <div class="col-4">
           <label>Subcategory</label>
-          <input type="text" id="express-subcategory" placeholder="e.g. 35mm SLR, Telephoto Lens">
+          <input type="text" id="express-subcategory" placeholder="e.g. 35mm SLR">
         </div>
 
         <div class="col-4">
@@ -155,199 +134,127 @@
             <option value="Estate Sale">Estate Sale</option>
             <option value="Consignment">Consignment</option>
             <option value="Direct Purchase">Direct Purchase</option>
-            <option value="Family Collection">Family Collection</option>
           </select>
         </div>
 
-        <!-- Live Typeahead Input for Title -->
-        <div class="col-12" style="position:relative;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
-            <label style="margin: 0;">Item Name / Model Title (eBay 80-Char Max) *</label>
-            <span class="char-counter" id="express-char-counter">80 left</span>
+        <!-- 85-Character Wide Title Field -->
+        <div class="col-12">
+          <div class="title-field-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+              <label style="margin: 0;">Item Name / Model Title (80-Char Max) *</label>
+              <span class="char-counter" id="express-char-counter">80 left</span>
+            </div>
+            <div class="input-with-arrow">
+              <input type="text" id="express-title" maxlength="80" placeholder="Type to search live Supabase inventory..." oninput="onTitleInput('express', this)">
+              <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete('express')">▼</button>
+            </div>
+            <div id="express-autocomplete" class="autocomplete-box hidden"></div>
           </div>
-          <div class="input-with-arrow">
-            <input type="text" id="express-title" maxlength="80" placeholder="Start typing model title (e.g. Nikon F3, Canon AE-1, Morgan Dollar)..." oninput="onExpressTitleInput(this)">
-            <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete('express')">▼</button>
-          </div>
-          <div id="express-autocomplete" class="autocomplete-box hidden"></div>
         </div>
 
-        <!-- Dynamic Condition Scale & Serial Number Duplicate Guard -->
+        <!-- Condition Grade & Dynamic Multipliers -->
         <div class="col-4">
           <label>Condition Grade (<span id="active-scale-label">GENERIC</span>)</label>
-          <select id="express-condition">
-            <!-- Populated dynamically based on category -->
+          <select id="express-condition" onchange="recalculateMatrixPrices()">
+            <!-- Dynamically Populated -->
           </select>
         </div>
 
         <div class="col-4">
           <label>Serial # / Markings</label>
-          <input type="text" id="express-sn" placeholder="SN: 2498102" onblur="checkDuplicateSN(this.value)">
+          <input type="text" id="express-sn" placeholder="SN: 2498102">
         </div>
 
         <div class="col-4">
           <label>Storage Location</label>
-          <input type="text" id="express-location" placeholder="e.g. Shelf A-4, Bin 12">
+          <input type="text" id="express-location" placeholder="e.g. Shelf A-4">
         </div>
 
         <!-- Defect Penalties -->
         <div class="col-12" style="background: var(--bg); padding: 8px 10px; border-radius: 4px; border: 1px solid var(--card-border);">
           <label style="margin-bottom: 6px;">Condition Penalties & Defect Flags</label>
           <div style="display: flex; gap: 18px; font-size: 11px;">
-            <label style="font-weight: 400; text-transform: none; color: #fff;"><input type="checkbox" id="express-defect-glass" onchange="recalculateExpressPrices()"> Broken Glass / Haze (-25%)</label>
-            <label style="font-weight: 400; text-transform: none; color: #fff;"><input type="checkbox" id="express-defect-parts" onchange="recalculateExpressPrices()"> Missing Key Parts (-20%)</label>
-            <label style="font-weight: 400; text-transform: none; color: #fff;"><input type="checkbox" id="express-defect-untested" onchange="recalculateExpressPrices()"> Untested / As-Is (-30%)</label>
+            <label style="font-weight: 400; text-transform: none;"><input type="checkbox" id="defect-glass" onchange="recalculateMatrixPrices()"> Haze / Fungus (-25%)</label>
+            <label style="font-weight: 400; text-transform: none;"><input type="checkbox" id="defect-parts" onchange="recalculateMatrixPrices()"> Missing Parts (-20%)</label>
+            <label style="font-weight: 400; text-transform: none;"><input type="checkbox" id="defect-untested" onchange="recalculateMatrixPrices()"> Untested / As-Is (-30%)</label>
           </div>
         </div>
 
-        <!-- Lot Allocation Toggle & COGS Breakdown -->
-        <div class="col-12" style="background: rgba(212,84,50,0.05); padding: 10px; border-radius: 4px; border: 1px solid rgba(212,84,50,0.2);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="margin: 0; color: var(--accent);">COGS & Lot Cost Allocation</label>
-            <div style="font-size: 11px; display: flex; gap: 10px;">
-              <label style="font-weight:400; text-transform:none;"><input type="radio" name="lot-type" value="SINGLE" checked onclick="toggleLotMode(false)"> Single Item</label>
-              <label style="font-weight:400; text-transform:none;"><input type="radio" name="lot-type" value="LOT" onclick="toggleLotMode(true)"> Bulk Lot / Box Breakdown</label>
-            </div>
-          </div>
+        <!-- BASE BENCHMARK INPUT -->
+        <div class="col-4">
+          <label>Base Benchmark Price ($)</label>
+          <input type="number" id="express-base-benchmark" value="100.00" oninput="recalculateMatrixPrices()">
+        </div>
 
-          <div class="form-grid">
-            <div class="col-3">
-              <label>Purchase Price ($)</label>
-              <input type="number" id="express-cogs-purchase" value="0.00" oninput="calculateTotalCOGS()">
-            </div>
-            <div class="col-3">
-              <label>Materials Cost ($)</label>
-              <input type="number" id="express-cogs-materials" value="0.00" oninput="calculateTotalCOGS()">
-            </div>
-            <div class="col-3">
-              <label>Labor Hours (hrs)</label>
-              <input type="number" id="express-cogs-labor" value="0.0" step="0.5" oninput="calculateTotalCOGS()">
-            </div>
-            <div class="col-3">
-              <label>Total Calculated COGS</label>
-              <input type="text" id="express-cogs-total" value="$0.00" readonly style="font-weight: 800; color: var(--accent);">
-            </div>
+        <!-- UNCHANGEABLE CONSTANT VISUAL CALCULATED PRICES -->
+        <div class="col-4">
+          <div class="price-display-box">
+            <div class="price-display-label">Calculated Retail Price</div>
+            <div class="price-display-value" id="display-retail-price">$100.00</div>
           </div>
         </div>
 
-        <!-- Pricing Engine (With Dirty/Clean Lock Protection) -->
-        <div class="col-3">
-          <label>Target Resale ($)</label>
-          <input type="number" id="express-price-resale" value="250.00" oninput="onResaleInputChanged()">
-        </div>
-        <div class="col-3">
-          <label>Target Sell Price ($) <span id="dirty-price-tag" style="color:var(--warning); font-size:8px;" class="hidden">(MANUAL)</span></label>
-          <input type="number" id="express-price-target" value="100.00" oninput="markPriceDirtyExpress()">
-        </div>
-        <div class="col-3">
-          <label>Min Price ($)</label>
-          <input type="number" id="express-price-min" value="80.00">
-        </div>
-        <div class="col-3">
-          <label>Max Price ($)</label>
-          <input type="number" id="express-price-max" value="120.00">
-        </div>
-
-        <!-- Photo Grid & Hero Image Selection -->
-        <div class="col-12">
-          <label>Photos (Tap Thumbnail to Crown as ⭐ HERO/Main Image)</label>
-          <div class="photo-grid" id="express-photo-grid">
-            <div class="photo-thumb is-hero" onclick="setHeroPhoto(0)">📷 Photo 1</div>
-            <div class="photo-thumb" onclick="setHeroPhoto(1)">📷 Photo 2</div>
-            <div class="photo-thumb" onclick="setHeroPhoto(2)">📷 Photo 3</div>
-            <div class="photo-thumb" onclick="setHeroPhoto(3)">+ Add</div>
+        <div class="col-4">
+          <div class="price-display-box" style="border-color: rgba(212,84,50,0.4);">
+            <div class="price-display-label">Target Buy Price (Constant)</div>
+            <div class="price-display-value buy-target" id="display-target-buy">$40.00</div>
           </div>
         </div>
 
-        <div class="col-12">
-          <label>Detailed Item Notes</label>
-          <textarea id="express-notes" rows="2" placeholder="Detail optical clarity, shutter speeds, accessories included..."></textarea>
-        </div>
-
-        <div class="col-12" style="display: flex; gap: 10px; margin-top: 6px;">
-          <button class="btn btn-accent" style="flex: 2; padding: 12px;" onclick="saveExpressItem()">💾 Save Directly to Master Inventory</button>
+        <!-- Actions -->
+        <div class="col-12" style="display: flex; gap: 10px; margin-top: 10px;">
+          <button class="btn btn-accent" style="flex: 2; padding: 12px;" onclick="saveExpressItem()">💾 Save Item to Supabase</button>
           <button class="btn btn-secondary" style="flex: 1;" onclick="clearExpressForm()">Clear Form</button>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- TAB 2: DUAL-PANE BUYING & SELLER QUOTE HUB -->
+  <!-- TAB 2: DUAL-PANE QUOTE HUB -->
   <main id="tab-quote" class="tab-content">
     <div class="grid-2">
-      <!-- LEFT PANE: ITEM EVALUATION & MARKET INTELLIGENCE -->
       <section class="pane">
-        <div class="pane-title">
-          <span>1. Item Evaluation & Inspection</span>
-          <span style="font-size: 10px; color: var(--muted);">QUOTE SESSION EVAL</span>
-        </div>
-
-        <div class="intel-panel internal-metric">
-          <span class="badge badge-hot">🔥 HOT | 14 Sold (30d)</span>
-          <span class="badge badge-stock">📦 3 ON HAND (Age: 92d)</span>
-          <span class="badge badge-conf">🎯 AI CONFIDENCE: HIGH (94%)</span>
-          <span class="badge badge-review hidden" id="quote-review-flag">🚩 HUMAN REVIEW REQUIRED</span>
-        </div>
-
+        <div class="pane-title">1. Item Evaluation & Matrix Search</div>
         <div class="form-grid">
-          <div class="col-6">
-            <label>Category *</label>
-            <select id="quote-category" onchange="onQuoteCategoryChange()">
-              <option value="CAM">Cameras & Photo (CAM)</option>
-              <option value="JWL">Fine Jewelry & Watches (JWL)</option>
-              <option value="CNS">Coins & Currency (CNS)</option>
-              <option value="OPT">Binoculars & Telescopes (OPT)</option>
-            </select>
-          </div>
-          <div class="col-6">
-            <label>Subcategory</label>
-            <input type="text" id="quote-subcategory" placeholder="e.g. Rangefinder">
-          </div>
-
-          <!-- Live Typeahead Input for Quote Title -->
-          <div class="col-12" style="position:relative;">
-            <label>Item Name / Title *</label>
-            <div class="input-with-arrow">
-              <input type="text" id="quote-title" placeholder="Type model title (e.g. Leica M6, Nikon F3, Morgan Dollar)..." oninput="onQuoteTitleInput(this)">
-              <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete('quote')">▼</button>
+          <div class="col-12">
+            <div class="title-field-container">
+              <label>Item Name / Title *</label>
+              <div class="input-with-arrow">
+                <input type="text" id="quote-title" placeholder="Search Supabase database..." oninput="onTitleInput('quote', this)">
+                <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete('quote')">▼</button>
+              </div>
+              <div id="quote-autocomplete" class="autocomplete-box hidden"></div>
             </div>
-            <div id="quote-autocomplete" class="autocomplete-box hidden"></div>
           </div>
 
           <div class="col-6">
             <label>Condition Grade</label>
-            <select id="quote-condition">
-              <option value="EX+">EX+</option>
-              <option value="EX">EX</option>
-              <option value="BGN">BGN</option>
-              <option value="PARTS">PARTS</option>
+            <select id="quote-condition" onchange="syncQuoteCalculations()">
+              <option value="LN">LN (100%)</option>
+              <option value="EX+" selected>EX+ (85%)</option>
+              <option value="EX">EX (75%)</option>
+              <option value="BGN">BGN (50%)</option>
+              <option value="PARTS">PARTS (20%)</option>
             </select>
           </div>
+
           <div class="col-6">
             <label>Serial Number</label>
-            <input type="text" id="quote-sn" placeholder="SN: 8901248">
+            <input type="text" id="quote-sn" placeholder="SN: Optional">
           </div>
 
-          <!-- Static Target Resale Display -->
-          <div class="col-12 internal-metric" style="background: var(--bg); padding: 8px; border-radius: 4px; border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 11px; font-weight: 700; color: var(--muted);">STATIC RESALE BENCHMARK:</span>
-            <span style="font-size: 16px; font-weight: 800; color: #FFF;" id="quote-static-resale">$250.00</span>
+          <!-- Unchangeable Target Offer Display -->
+          <div class="col-6">
+            <div class="price-display-box">
+              <div class="price-display-label">Est. Retail Value</div>
+              <div class="price-display-value" id="quote-display-retail">$0.00</div>
+            </div>
           </div>
 
-          <!-- Compact Bi-Directional Bid Offer Calculator -->
-          <div class="col-12" style="display: flex; align-items: center; gap: 10px; background: rgba(212,84,50,0.05); padding: 8px; border-radius: 4px; border: 1px solid rgba(212,84,50,0.2);">
-            <div>
-              <label>Offer %</label>
-              <input type="number" id="quote-offer-pct" class="input-mini" value="40" oninput="syncQuoteFromPct()">
-            </div>
-            <div style="font-weight: 800; color: var(--muted); font-size: 16px;">=</div>
-            <div>
-              <label>Offer Amount ($)</label>
-              <input type="number" id="quote-offer-amt" class="input-compact" value="100.00" oninput="syncQuoteFromAmt()">
-            </div>
-            <div style="margin-left: auto; display: flex; gap: 4px;">
-              <button class="btn btn-secondary" onclick="roundQuoteOffer(5)">+$5</button>
-              <button class="btn btn-secondary" onclick="roundQuoteOffer(10)">+$10</button>
+          <div class="col-6">
+            <div class="price-display-box" style="border-color: rgba(212,84,50,0.4);">
+              <div class="price-display-label">Matrix Target Buy</div>
+              <div class="price-display-value buy-target" id="quote-display-buy">$0.00</div>
             </div>
           </div>
 
@@ -357,486 +264,309 @@
         </div>
       </section>
 
-      <!-- RIGHT PANE: SELLER QUOTE & COMPLIANCE CAPTURE -->
       <section class="pane">
-        <div class="pane-title">
-          <span>2. Seller Quote & Compliance Hub</span>
-          <span style="font-size: 11px; color: var(--accent);">TRANSACTION LOG</span>
-        </div>
-
-        <div class="form-grid" style="background: var(--bg); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border);">
-          <div class="col-4">
-            <label>Seller Name *</label>
-            <input type="text" id="seller-name" placeholder="John Doe">
-          </div>
-          <div class="col-4">
-            <label>Phone Number *</label>
-            <input type="text" id="seller-phone" placeholder="(512) 555-0192">
-          </div>
-          <div class="col-4">
-            <label>Driver License #</label>
-            <input type="text" id="seller-dl" placeholder="DL-89012482">
-          </div>
-
-          <div class="col-12" style="border: 1px dashed var(--card-border); border-radius: 4px; padding: 8px; text-align: center; cursor: pointer;" onclick="triggerDLUpload()">
-            <span style="font-size: 11px; color: var(--muted);">📷 <strong>Scan / Upload Driver License Barcode</strong> (Compliance Front/Back)</span>
-            <input type="file" id="dl-file" class="hidden" onchange="onDLFileSelected()">
-            <div id="dl-status" style="font-size: 10px; color: var(--success); margin-top: 4px;" class="hidden">✓ Driver License Scan Attached</div>
-          </div>
-        </div>
-
-        <div style="flex: 1; overflow-y: auto; max-height: 280px; border: 1px solid var(--card-border); border-radius: 4px;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Grade</th>
-                <th>Offer ($)</th>
-                <th class="internal-metric">Margin</th>
-                <th>Remove</th>
-              </tr>
-            </thead>
-            <tbody id="quote-table-body">
-              <tr><td colspan="5" style="text-align:center; color: var(--muted); padding: 15px;">No items in quote session.</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div style="background: var(--bg); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <div style="font-size: 10px; color: var(--muted); font-weight: 700;">ITEMS: <span id="total-quote-qty">0</span></div>
-            <div class="internal-metric" style="font-size: 10px; color: var(--muted); font-weight: 700;">EST. RESALE: <span id="total-quote-resale">$0.00</span></div>
-          </div>
-          <div>
-            <div style="font-size: 10px; color: var(--muted); font-weight: 700;">TOTAL CASH OFFER</div>
-            <div style="font-size: 18px; font-weight: 800; color: var(--accent);" id="total-quote-offer">$0.00</div>
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
-          <button class="btn btn-success" onclick="commitQuoteSession('Bought')">🟢 BOUGHT</button>
-          <button class="btn btn-warning" onclick="commitQuoteSession('Hold')">🟡 HOLD</button>
-          <button class="btn btn-danger" onclick="commitQuoteSession('Rejected')">🔴 REJECTED</button>
-        </div>
+        <div class="pane-title">2. Seller Quote Session</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Grade</th>
+              <th>Target Buy ($)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="quote-table-body">
+            <tr><td colspan="4" style="text-align:center; color: var(--muted); padding: 15px;">No items added yet.</td></tr>
+          </tbody>
+        </table>
       </section>
     </div>
   </main>
 
-  <!-- TAB 3: IN-PROCESS STAGING BUFFER -->
+  <!-- TAB 3: STAGING -->
   <main id="tab-staging" class="tab-content">
     <div class="pane">
-      <div class="pane-title">
-        <span>⏳ In-Process Staging Buffer</span>
-        <button class="btn btn-accent" onclick="processBatchStagingActions()">⚡ Execute Batch Actions</button>
-      </div>
-
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Temp ID</th>
-            <th>Item Name</th>
-            <th>Source App</th>
-            <th>Offer / COGS</th>
-            <th>Action Selector</th>
-          </tr>
-        </thead>
-        <tbody id="staging-table-body">
-          <tr>
-            <td>TMP-8901</td>
-            <td><strong>Canon AE-1 Program 35mm Body</strong></td>
-            <td><span class="badge badge-hot">Capture App</span></td>
-            <td>$65.00</td>
-            <td>
-              <select style="padding: 3px 6px; font-size: 10px;">
-                <option value="Pending">Pending Review</option>
-                <option value="Move">Move to Master Inventory</option>
-                <option value="Post">Post & Queue Label</option>
-                <option value="Hold">Hold</option>
-              </select>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="pane-title">⏳ In-Process Staging Buffer</div>
+      <p style="font-size: 11px; color: var(--muted);">Staged inventory awaiting final print and listing synchronization.</p>
     </div>
   </main>
 
-  <!-- TAB 4: MASTER INVENTORY & CSV EXPORT -->
+  <!-- TAB 4: MASTER INVENTORY -->
   <main id="tab-inventory" class="tab-content">
     <div class="pane">
-      <div class="pane-title">
-        <span>📦 Master Inventory Ledger</span>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn btn-success" onclick="exportVoolistCSV()">📥 Export Voolist CSV (Ready to List)</button>
-          <button class="btn btn-secondary" onclick="printLabelsQueue()">🖨️ Print Labels Queue (PDF)</button>
-        </div>
-      </div>
-
+      <div class="pane-title">📦 Live Supabase Inventory Ledger</div>
       <table class="data-table">
         <thead>
           <tr>
             <th>SKU</th>
-            <th>Item Name</th>
+            <th>Title</th>
             <th>Category</th>
             <th>Grade</th>
-            <th>COGS ($)</th>
-            <th>Target ($)</th>
-            <th>Status</th>
+            <th>Target Buy ($)</th>
+            <th>Retail ($)</th>
           </tr>
         </thead>
         <tbody id="inventory-table-body">
-          <tr>
-            <td><strong>CAM-1042</strong></td>
-            <td>Nikon F3 SLR Film Camera Body</td>
-            <td>Cameras (CAM)</td>
-            <td>EX+</td>
-            <td>$120.00</td>
-            <td>$280.00</td>
-            <td><span class="badge badge-conf">Ready to List</span></td>
-          </tr>
+          <tr><td colspan="6" style="text-align:center; color: var(--muted); padding: 15px;">Connect Supabase to load inventory ledger.</td></tr>
         </tbody>
       </table>
     </div>
   </main>
 
-  <!-- TAB 5: SETTINGS & TAXONOMY ENGINE -->
+  <!-- TAB 5: SETTINGS -->
   <main id="tab-settings" class="tab-content">
-    <div class="grid-2">
-      <div class="pane">
-        <div class="pane-title">⚙️ Category Hierarchy & Human Review Toggles</div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Code</th>
-              <th>Category Name</th>
-              <th>Human Review Flag</th>
-              <th>Status Switch</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>CAM</td>
-              <td>Cameras & Photo</td>
-              <td><input type="checkbox"> Requires Review</td>
-              <td><button class="btn btn-success" style="padding: 2px 6px; font-size: 9px;">ACTIVE</button></td>
-            </tr>
-            <tr>
-              <td>JWL</td>
-              <td>Fine Jewelry & Watches</td>
-              <td><input type="checkbox" checked> Requires Review</td>
-              <td><button class="btn btn-success" style="padding: 2px 6px; font-size: 9px;">ACTIVE</button></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pane">
-        <div class="pane-title">🛠️ Category Merge & De-Duplication Tool</div>
-        <p style="font-size: 11px; color: var(--muted);">Merge on-the-fly duplicate categories (e.g. "Mounted Animals" ➔ "Taxidermy") without breaking historical SKU logs.</p>
-        <div class="form-grid">
-          <div class="col-6">
-            <label>Source Category (Duplicate)</label>
-            <input type="text" placeholder="e.g. Mounted Animals">
-          </div>
-          <div class="col-6">
-            <label>Target Master Category</label>
-            <input type="text" placeholder="e.g. Taxidermy">
-          </div>
-          <div class="col-12">
-            <button class="btn btn-warning" style="width: 100%;">Merge & Re-Assign All Inventory Records</button>
-          </div>
-        </div>
-      </div>
+    <div class="pane">
+      <div class="pane-title">⚙️ Programmable Matrix Factors</div>
+      <p style="font-size: 11px; color: var(--muted);">Condition Grade Multipliers & Target Buy Ratios applied globally.</p>
     </div>
   </main>
 
   <script>
-    // Embedded Catalog Benchmark Dataset (Offline Fallback & Instant Typeahead Database)
-    const MOCK_CATALOG = [
-      { title: "Nikon F3 35mm SLR Film Camera Body", category: "CAM", subcategory: "35mm SLR", resale: 280.00, min: 220.00, max: 340.00 },
-      { title: "Nikon F2 Photomic 35mm SLR Camera", category: "CAM", subcategory: "35mm SLR", resale: 200.00, min: 150.00, max: 260.00 },
-      { title: "Canon AE-1 Program 35mm SLR Camera", category: "CAM", subcategory: "35mm SLR", resale: 165.00, min: 120.00, max: 210.00 },
-      { title: "Leica M6 35mm Rangefinder Camera Body", category: "CAM", subcategory: "Rangefinder", resale: 2450.00, min: 2100.00, max: 2850.00 },
-      { title: "Olympus OM-1 35mm SLR Camera Body", category: "CAM", subcategory: "35mm SLR", resale: 140.00, min: 100.00, max: 180.00 },
-      { title: "Minolta X-700 35mm SLR Camera Body", category: "CAM", subcategory: "35mm SLR", resale: 125.00, min: 90.00, max: 160.00 },
-      { title: "Morgan Silver Dollar (1878-1921) VF/EF", category: "CNS", subcategory: "Silver Dollars", resale: 38.00, min: 32.00, max: 45.00 },
-      { title: "Peace Silver Dollar (1921-1935) AU/MS", category: "CNS", subcategory: "Silver Dollars", resale: 35.00, min: 28.00, max: 42.00 },
-      { title: "Rolex Submariner Date 16610 Steel", category: "JWL", subcategory: "Luxury Watches", resale: 8500.00, min: 7800.00, max: 9400.00 },
-      { title: "Bushnell 10x42 Waterproof Binoculars", category: "OPT", subcategory: "Binoculars", resale: 65.00, min: 45.00, max: 85.00 }
-    ];
+    // --- SUPABASE CONFIGURATION ---
+    const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    
+    let supabase = null;
+    try {
+      if (window.supabase && SUPABASE_URL.includes("http")) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+    } catch (e) {
+      console.warn("Configure SUPABASE_URL and SUPABASE_ANON_KEY to enable live database features.");
+    }
 
-    const DYNAMIC_CONDITION_SCALES = {
-      GENERIC: ['NEW', 'LN', 'LN-', 'EX+', 'EX', 'EX-', 'BGN', 'UGLY', 'AS-IS', 'PARTS'],
-      NUMISMATIC: ['MS-70', 'MS-65', 'MS-60', 'AU-50', 'EF-40', 'VF-20', 'F-12', 'VG-8', 'G-4', 'PR-Proof'],
-      BOOKS: ['Fine', 'Very Good', 'Good', 'Fair', 'Poor', 'Ex-Library']
+    // --- PROGRAMMABLE GRADE MULTIPLIERS MATRIX ---
+    const GRADE_MULTIPLIERS = {
+      'LN': 1.00,
+      'LN-': 0.92,
+      'EX+': 0.85,
+      'EX': 0.75,
+      'EX-': 0.65,
+      'BGN': 0.50,
+      'UGLY': 0.35,
+      'PARTS': 0.20
     };
 
-    let isExpressPriceDirty = false;
-    let isSellerView = false;
+    const TARGET_BUY_RATIO = 0.40; // 40% Target Buy Factor
+    let debounceTimer = null;
     let quoteList = [];
-    let quoteCurrentResale = 250.00;
+    let quoteActiveBenchmark = 0;
 
     window.addEventListener('DOMContentLoaded', () => {
       onExpressCategoryChange();
+      recalculateMatrixPrices();
+      if (supabase) loadInventoryFromSupabase();
     });
 
-    function switchTab(tabId) {
+    // --- TAB SWITCHING ENGINE ---
+    function switchTab(tabId, btnEl) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      event.target.classList.add('active');
+      
+      const target = document.getElementById(tabId);
+      if (target) target.classList.add('active');
+      if (btnEl) btnEl.classList.add('active');
     }
 
-    function toggleSellerFlip() {
-      isSellerView = !isSellerView;
-      document.body.classList.toggle('seller-mode-active');
-      document.getElementById('btn-seller-flip').innerText = isSellerView ? '🔒 Exit Seller View' : '👁️ Flip to Seller View';
+    // --- UNCHANGEABLE CONSTANT PRICE CALCULATOR ---
+    function recalculateMatrixPrices() {
+      const baseBenchmark = parseFloat(document.getElementById('express-base-benchmark').value) || 0;
+      const grade = document.getElementById('express-condition').value || 'EX+';
+      const gradeMult = GRADE_MULTIPLIERS[grade] !== undefined ? GRADE_MULTIPLIERS[grade] : 0.85;
+
+      let defectPenalty = 0;
+      if (document.getElementById('defect-glass')?.checked) defectPenalty += 0.25;
+      if (document.getElementById('defect-parts')?.checked) defectPenalty += 0.20;
+      if (document.getElementById('defect-untested')?.checked) defectPenalty += 0.30;
+
+      const effectiveMult = Math.max(0.05, gradeMult - defectPenalty);
+      const calculatedRetail = baseBenchmark * effectiveMult;
+      const calculatedBuyTarget = calculatedRetail * TARGET_BUY_RATIO;
+
+      // Update unchangeable visual displays
+      document.getElementById('display-retail-price').innerText = `$${calculatedRetail.toFixed(2)}`;
+      document.getElementById('display-target-buy').innerText = `$${calculatedBuyTarget.toFixed(2)}`;
     }
 
-    // --- TYPEAHEAD / AUTOCOMPLETE ENGINE ---
-    function onExpressTitleInput(input) {
-      const remaining = 80 - input.value.length;
-      const counter = document.getElementById('express-char-counter');
-      counter.innerText = `${remaining} left`;
-      counter.className = `char-counter ${remaining < 15 ? (remaining < 5 ? 'danger' : 'warn') : ''}`;
-
-      renderAutocomplete('express', input.value.trim());
-    }
-
-    function onQuoteTitleInput(input) {
-      renderAutocomplete('quote', input.value.trim());
-    }
-
-    function renderAutocomplete(context, query) {
-      const box = document.getElementById(`${context}-autocomplete`);
-      if (!query || query.length < 2) {
-        box.classList.add('hidden');
-        return;
-      }
-
-      const matches = MOCK_CATALOG.filter(item => 
-        item.title.toLowerCase().includes(query.toLowerCase())
-      );
-
-      if (matches.length === 0) {
-        box.classList.add('hidden');
-        return;
-      }
-
-      box.innerHTML = '';
-      matches.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'autocomplete-item';
-        div.innerHTML = `
-          <div>
-            <strong>${item.title}</strong>
-            <div style="font-size:9px; color:var(--muted);">${item.category} / ${item.subcategory}</div>
-          </div>
-          <div class="item-price">$${item.resale.toFixed(2)}</div>
-        `;
-        div.onclick = () => selectCatalogMatch(context, item);
-        box.appendChild(div);
-      });
-
-      box.classList.remove('hidden');
-    }
-
-    function toggleTitleAutocomplete(context) {
-      const input = document.getElementById(`${context}-title`);
-      renderAutocomplete(context, input.value.trim() || 'a'); // trigger dropdown on click
-    }
-
-    function selectCatalogMatch(context, item) {
-      document.getElementById(`${context}-title`).value = item.title;
-      document.getElementById(`${context}-autocomplete`).classList.add('hidden');
-
-      if (context === 'express') {
-        document.getElementById('express-category').value = item.category;
-        document.getElementById('express-subcategory').value = item.subcategory;
-        document.getElementById('express-price-resale').value = item.resale.toFixed(2);
-        document.getElementById('express-price-min').value = item.min.toFixed(2);
-        document.getElementById('express-price-max').value = item.max.toFixed(2);
-        isExpressPriceDirty = false;
-        document.getElementById('dirty-price-tag').classList.add('hidden');
-        onExpressCategoryChange();
-        recalculateExpressPrices();
-      } else if (context === 'quote') {
-        document.getElementById('quote-category').value = item.category;
-        document.getElementById('quote-subcategory').value = item.subcategory;
-        quoteCurrentResale = item.resale;
-        document.getElementById('quote-static-resale').innerText = `$${item.resale.toFixed(2)}`;
-        syncQuoteFromPct();
-      }
-    }
-
-    // --- TAB 1: EXPRESS INTAKE LOGIC ---
+    // --- EXPRESS CATEGORY CHANGE ---
     function onExpressCategoryChange() {
       const select = document.getElementById('express-category');
-      const selectedOpt = select.options[select.selectedIndex];
-      const scaleKey = selectedOpt.getAttribute('data-scale') || 'GENERIC';
       const code = select.value;
-
-      document.getElementById('active-scale-label').innerText = scaleKey;
       document.getElementById('express-sku-display').innerText = `SKU: ${code}-AUTO`;
 
       const condSelect = document.getElementById('express-condition');
       condSelect.innerHTML = '';
-      (DYNAMIC_CONDITION_SCALES[scaleKey] || DYNAMIC_CONDITION_SCALES.GENERIC).forEach(opt => {
-        condSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
+      Object.keys(GRADE_MULTIPLIERS).forEach(g => {
+        condSelect.innerHTML += `<option value="${g}" ${g === 'EX+' ? 'selected' : ''}>${g} (${(GRADE_MULTIPLIERS[g]*100)}%)</option>`;
       });
+      recalculateMatrixPrices();
     }
 
-    function checkDuplicateSN(sn) {
-      if (!sn.trim()) return;
-      if (sn === '2498102') {
-        alert(`⚠️ DUPLICATE SERIAL NUMBER: Serial #${sn} already exists on SKU CAM-8921 in Master Inventory.`);
+    // --- LIVE SUPABASE TYPEAHEAD ENGINE ---
+    function onTitleInput(context, input) {
+      if (context === 'express') {
+        const remaining = 80 - input.value.length;
+        const counter = document.getElementById('express-char-counter');
+        counter.innerText = `${remaining} left`;
+        counter.className = `char-counter ${remaining < 15 ? (remaining < 5 ? 'danger' : 'warn') : ''}`;
+      }
+
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        searchSupabase(context, input.value.trim());
+      }, 200);
+    }
+
+    async function searchSupabase(context, query) {
+      const box = document.getElementById(`${context}-autocomplete`);
+      if (!query || query.length < 2 || !supabase) {
+        box.classList.add('hidden');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('inventory')
+          .select('title, category, initial_price, latest_update_price')
+          .ilike('title', `%${query}%`)
+          .limit(8);
+
+        if (error || !data || data.length === 0) {
+          box.classList.add('hidden');
+          return;
+        }
+
+        box.innerHTML = '';
+        data.forEach(item => {
+          // Fallback logic: latest_update_price first, fallback to initial_price
+          const price = item.latest_update_price ?? item.initial_price ?? 0;
+          const div = document.createElement('div');
+          div.className = 'autocomplete-item';
+          div.innerHTML = `
+            <div><strong>${item.title}</strong></div>
+            <div style="font-weight:800; color:var(--accent);">$${parseFloat(price).toFixed(2)}</div>
+          `;
+          div.onclick = () => selectRecord(context, item);
+          box.appendChild(div);
+        });
+        box.classList.remove('hidden');
+      } catch (e) {
+        console.error(e);
       }
     }
 
-    function recalculateExpressPrices() {
-      let penalty = 0;
-      if (document.getElementById('express-defect-glass').checked) penalty += 0.25;
-      if (document.getElementById('express-defect-parts').checked) penalty += 0.20;
-      if (document.getElementById('express-defect-untested').checked) penalty += 0.30;
+    function toggleTitleAutocomplete(context) {
+      const input = document.getElementById(`${context}-title`);
+      searchSupabase(context, input.value.trim());
+    }
 
-      const baseResale = parseFloat(document.getElementById('express-price-resale').value) || 0;
-      const adjustedResale = baseResale * (1 - penalty);
+    function selectRecord(context, item) {
+      const price = parseFloat(item.latest_update_price ?? item.initial_price ?? 0);
+      document.getElementById(`${context}-title`).value = item.title;
+      document.getElementById(`${context}-autocomplete`).classList.add('hidden');
 
-      if (!isExpressPriceDirty) {
-        document.getElementById('express-price-target').value = (adjustedResale * 0.40).toFixed(2);
+      if (context === 'express') {
+        document.getElementById('express-base-benchmark').value = price.toFixed(2);
+        recalculateMatrixPrices();
+      } else if (context === 'quote') {
+        quoteActiveBenchmark = price;
+        syncQuoteCalculations();
       }
     }
 
-    function markPriceDirtyExpress() {
-      isExpressPriceDirty = true;
-      document.getElementById('dirty-price-tag').classList.remove('hidden');
+    function syncQuoteCalculations() {
+      const grade = document.getElementById('quote-condition').value;
+      const mult = GRADE_MULTIPLIERS[grade] || 0.85;
+      const retail = quoteActiveBenchmark * mult;
+      const buy = retail * TARGET_BUY_RATIO;
+
+      document.getElementById('quote-display-retail').innerText = `$${retail.toFixed(2)}`;
+      document.getElementById('quote-display-buy').innerText = `$${buy.toFixed(2)}`;
     }
 
-    function onResaleInputChanged() {
-      isExpressPriceDirty = false;
-      document.getElementById('dirty-price-tag').classList.add('hidden');
-      recalculateExpressPrices();
+    function addQuoteItem() {
+      const title = document.getElementById('quote-title').value.trim();
+      const buyText = document.getElementById('quote-display-buy').innerText;
+      const grade = document.getElementById('quote-condition').value;
+
+      if (!title) return alert('Enter title.');
+      quoteList.push({ title, grade, buyText });
+      renderQuoteTable();
+      document.getElementById('quote-title').value = '';
     }
 
-    function calculateTotalCOGS() {
-      const purchase = parseFloat(document.getElementById('express-cogs-purchase').value) || 0;
-      const materials = parseFloat(document.getElementById('express-cogs-materials').value) || 0;
-      const labor = parseFloat(document.getElementById('express-cogs-labor').value) || 0;
-      const total = purchase + materials + (labor * 25.00);
-      document.getElementById('express-cogs-total').value = `$${total.toFixed(2)}`;
-    }
-
-    function setHeroPhoto(index) {
-      const thumbs = document.querySelectorAll('#express-photo-grid .photo-thumb');
-      thumbs.forEach((t, i) => {
-        if (i === index) t.classList.add('is-hero');
-        else t.classList.remove('is-hero');
+    function renderQuoteTable() {
+      const tbody = document.getElementById('quote-table-body');
+      if (quoteList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--muted); padding: 15px;">No items added yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      quoteList.forEach((item, i) => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${item.title}</strong></td>
+            <td>${item.grade}</td>
+            <td style="color:var(--accent); font-weight:800;">${item.buyText}</td>
+            <td><button class="btn btn-secondary" onclick="quoteList.splice(${i},1); renderQuoteTable();">✕</button></td>
+          </tr>
+        `;
       });
     }
 
-    function toggleLotMode(isLot) {
-      if (isLot) alert('Lot breakdown mode activated: Cost allocation will be split across created lot items.');
-    }
-
-    function saveExpressItem() {
+    async function saveExpressItem() {
       const title = document.getElementById('express-title').value.trim();
-      if (!title) return alert('Please enter an Item Title before saving.');
-      alert(`Item "${title}" successfully saved directly to Master Inventory ledger.`);
-      clearExpressForm();
+      if (!title) return alert('Please enter item title.');
+      if (!supabase) return alert('Connect Supabase to save records.');
+
+      const calculatedRetail = parseFloat(document.getElementById('display-retail-price').innerText.replace('$','')) || 0;
+      const calculatedBuy = parseFloat(document.getElementById('display-target-buy').innerText.replace('$','')) || 0;
+
+      const { error } = await supabase.from('inventory').insert([{
+        title: title,
+        category: document.getElementById('express-category').value,
+        subcategory: document.getElementById('express-subcategory').value,
+        serial_number: document.getElementById('express-sn').value,
+        condition_grade: document.getElementById('express-condition').value,
+        initial_price: calculatedRetail,
+        latest_update_price: calculatedRetail,
+        cogs_total: calculatedBuy
+      }]);
+
+      if (error) alert(error.message);
+      else {
+        alert('Saved successfully to Supabase!');
+        clearExpressForm();
+        loadInventoryFromSupabase();
+      }
     }
 
     function clearExpressForm() {
       document.getElementById('express-title').value = '';
       document.getElementById('express-sn').value = '';
-      document.getElementById('express-notes').value = '';
-      isExpressPriceDirty = false;
-      document.getElementById('dirty-price-tag').classList.add('hidden');
-      onExpressTitleInput(document.getElementById('express-title'));
+      onTitleInput('express', document.getElementById('express-title'));
     }
 
-    // --- TAB 2: QUOTE HUB LOGIC ---
-    function onQuoteCategoryChange() {
-      const cat = document.getElementById('quote-category').value;
-      const flag = document.getElementById('quote-review-flag');
-      if (cat === 'JWL' || cat === 'CNS') flag.classList.remove('hidden');
-      else flag.classList.add('hidden');
-    }
+    async function loadInventoryFromSupabase() {
+      const tbody = document.getElementById('inventory-table-body');
+      const { data, error } = await supabase.from('inventory').select('*').limit(25);
+      if (error || !data || data.length === 0) return;
 
-    function syncQuoteFromPct() {
-      const pct = parseFloat(document.getElementById('quote-offer-pct').value) || 0;
-      document.getElementById('quote-offer-amt').value = (quoteCurrentResale * (pct / 100)).toFixed(2);
-    }
-
-    function syncQuoteFromAmt() {
-      const amt = parseFloat(document.getElementById('quote-offer-amt').value) || 0;
-      document.getElementById('quote-offer-pct').value = ((amt / quoteCurrentResale) * 100).toFixed(0);
-    }
-
-    function roundQuoteOffer(step) {
-      let amt = parseFloat(document.getElementById('quote-offer-amt').value) || 0;
-      amt = Math.ceil(amt / step) * step;
-      document.getElementById('quote-offer-amt').value = amt.toFixed(2);
-      syncQuoteFromAmt();
-    }
-
-    function triggerDLUpload() { document.getElementById('dl-file').click(); }
-    function onDLFileSelected() { document.getElementById('dl-status').classList.remove('hidden'); }
-
-    function addQuoteItem() {
-      const title = document.getElementById('quote-title').value.trim();
-      const amt = parseFloat(document.getElementById('quote-offer-amt').value) || 0;
-      const cond = document.getElementById('quote-condition').value;
-
-      if (!title) return alert('Enter item title.');
-
-      quoteList.push({ title, cond, resale: quoteCurrentResale, offer: amt });
-      renderQuoteList();
-      document.getElementById('quote-title').value = '';
-    }
-
-    function renderQuoteList() {
-      const tbody = document.getElementById('quote-table-body');
-      if (quoteList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--muted); padding: 15px;">No items in quote session.</td></tr>';
-        return;
-      }
       tbody.innerHTML = '';
-      let totResale = 0, totOffer = 0;
-      quoteList.forEach((item, idx) => {
-        totResale += item.resale;
-        totOffer += item.offer;
-        const margin = (((item.resale - item.offer) / item.resale) * 100).toFixed(0);
+      data.forEach(item => {
+        const price = item.latest_update_price ?? item.initial_price ?? 0;
         tbody.innerHTML += `
           <tr>
-            <td><strong>${item.title}</strong></td>
-            <td>${item.cond}</td>
-            <td style="color:var(--accent); font-weight:700;">$${item.offer.toFixed(2)}</td>
-            <td class="internal-metric" style="color:var(--success);">${margin}%</td>
-            <td><button class="btn btn-secondary" onclick="removeQuoteItem(${idx})">✕</button></td>
+            <td><strong>${item.sku || 'CAM-AUTO'}</strong></td>
+            <td>${item.title}</td>
+            <td>${item.category || ''}</td>
+            <td>${item.condition_grade || ''}</td>
+            <td>$${(item.cogs_total || 0).toFixed(2)}</td>
+            <td>$${parseFloat(price).toFixed(2)}</td>
           </tr>
         `;
       });
-      document.getElementById('total-quote-qty').innerText = quoteList.length;
-      document.getElementById('total-quote-resale').innerText = `$${totResale.toFixed(2)}`;
-      document.getElementById('total-quote-offer').innerText = `$${totOffer.toFixed(2)}`;
     }
-
-    function removeQuoteItem(idx) {
-      quoteList.splice(idx, 1);
-      renderQuoteList();
-    }
-
-    function commitQuoteSession(type) {
-      const seller = document.getElementById('seller-name').value.trim();
-      if (!seller) return alert('Enter seller name first.');
-      if (quoteList.length === 0) return alert('Add at least one item.');
-      alert(`Quote session committed as [${type}] for seller: ${seller}.`);
-      quoteList = [];
-      renderQuoteList();
-    }
-
-    function processBatchStagingActions() { alert('Executing batch actions on staged items.'); }
-    function exportVoolistCSV() { alert('Exporting Voolist CSV...'); }
-    function printLabelsQueue() { alert('Generating PDF label print queue...'); }
   </script>
 </body>
 </html>
