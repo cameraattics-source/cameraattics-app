@@ -7,9 +7,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #0B0E14;
-      --card: #141A24;
-      --card-border: #222C3D;
+      --bg: #090C10;
+      --card: #131924;
+      --card-border: #212B3D;
       --accent: #D45432;
       --accent-hover: #E86341;
       --text: #E6E1D6;
@@ -23,28 +23,29 @@
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* Top Navigation Bar & Tabs */
+    /* Application Header */
     .app-header { background: var(--card); border-bottom: 1px solid var(--card-border); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
     .brand { font-size: 15px; font-weight: 800; letter-spacing: 1.5px; color: var(--text); padding: 14px 0; }
     .brand span { color: var(--accent); }
 
     .nav-tabs { display: flex; gap: 4px; }
-    .nav-tab { padding: 14px 16px; font-size: 12px; font-weight: 700; color: var(--muted); background: transparent; border: none; border-bottom: 3px solid transparent; cursor: pointer; transition: 0.15s; }
+    .nav-tab { padding: 14px 16px; font-size: 11px; font-weight: 700; color: var(--muted); background: transparent; border: none; border-bottom: 3px solid transparent; cursor: pointer; transition: 0.15s; }
     .nav-tab:hover { color: var(--text); }
     .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(212, 84, 50, 0.05); }
 
-    /* Main Container */
-    .tab-content { display: none; padding: 16px; flex: 1; max-width: 1650px; margin: 0 auto; width: 100%; }
+    /* Workspace Container */
+    .tab-content { display: none; padding: 16px; flex: 1; max-width: 1700px; margin: 0 auto; width: 100%; }
     .tab-content.active { display: block; }
 
-    /* Pane & Layout System */
-    .workspace-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 1024px) { .workspace-grid { grid-template-columns: 1fr; } }
+    /* Grid & Pane Architecture */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    @media (max-width: 1024px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
 
     .pane { background: var(--card); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .pane-title { font-size: 13px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 8px; margin: 0; }
+    .pane-title { font-size: 12px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 8px; margin: 0; }
 
-    /* Form Fields & Digit-Appropriate Sizes */
+    /* Form Fields & Compact Layouts */
     .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 8px; align-items: center; }
     .col-12 { grid-column: span 12; }
     .col-8  { grid-column: span 8; }
@@ -55,36 +56,55 @@
 
     label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 3px; }
     input, select, textarea { width: 100%; padding: 7px 9px; background: var(--bg); border: 1px solid var(--card-border); border-radius: 4px; color: #fff; font-size: 12px; }
-    input:focus, select:focus { outline: none; border-color: var(--accent); }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
 
-    /* Field-Width Modifiers */
-    .input-mini { max-width: 75px; text-align: center; }
+    .input-mini { max-width: 75px; text-align: center; font-weight: 700; }
     .input-compact { max-width: 110px; font-weight: 700; }
 
-    /* Market Intelligence & Warning Badges Panel */
-    .intel-panel { background: rgba(15, 20, 28, 0.8); border: 1px solid var(--card-border); border-radius: 6px; padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+    /* Title Autocomplete with Dropdown Arrow */
+    .input-with-arrow { position: relative; display: flex; align-items: center; }
+    .dropdown-arrow-btn { position: absolute; right: 4px; background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px 8px; font-size: 10px; }
+    .autocomplete-box { position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background: var(--card); border: 1px solid var(--accent); border-radius: 6px; max-height: 200px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.8); }
+    .autocomplete-item { padding: 8px 12px; border-bottom: 1px solid var(--card-border); cursor: pointer; font-size: 11px; display: flex; justify-content: space-between; }
+    .autocomplete-item:hover { background: var(--card-border); }
+
+    /* Character Counter Badge */
+    .char-counter { font-size: 10px; font-weight: 700; color: var(--success); }
+    .char-counter.warn { color: var(--warning); }
+    .char-counter.danger { color: var(--danger); }
+
+    /* Intelligence & Alert Badges */
+    .intel-panel { background: rgba(9, 12, 16, 0.8); border: 1px solid var(--card-border); border-radius: 6px; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 8px; }
     .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px; }
     .badge-hot { background: rgba(212, 84, 50, 0.2); color: var(--accent); border: 1px solid var(--accent); }
     .badge-stock { background: rgba(245, 124, 0, 0.2); color: var(--warning); border: 1px solid var(--warning); }
     .badge-conf { background: rgba(46, 125, 50, 0.2); color: var(--success); border: 1px solid var(--success); }
     .badge-review { background: rgba(142, 36, 170, 0.2); color: #D1C4E9; border: 1px solid #8E24AA; }
 
-    /* Seller Compliance & ID Photo Capture */
-    .id-capture-box { border: 1px dashed var(--card-border); border-radius: 6px; padding: 10px; text-align: center; background: var(--bg); cursor: pointer; transition: 0.2s; }
-    .id-capture-box:hover { border-color: var(--accent); }
+    /* Hero Image Photo Grid */
+    .photo-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 6px; }
+    .photo-thumb { aspect-ratio: 1; background: var(--bg); border: 1px solid var(--card-border); border-radius: 4px; position: relative; cursor: pointer; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted); }
+    .photo-thumb.is-hero { border: 2px solid var(--accent); }
+    .photo-thumb.is-hero::after { content: "⭐ HERO"; position: absolute; top: 2px; left: 2px; background: var(--accent); color: #fff; font-size: 8px; font-weight: 800; padding: 1px 4px; border-radius: 2px; }
 
-    /* Table System */
-    .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .data-table th { background: var(--bg); color: var(--muted); padding: 8px; text-align: left; border-bottom: 1px solid var(--card-border); font-size: 10px; text-transform: uppercase; }
-    .data-table td { padding: 8px; border-bottom: 1px solid var(--card-border); }
+    /* Tables */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .data-table th { background: var(--bg); color: var(--muted); padding: 8px; text-align: left; border-bottom: 1px solid var(--card-border); font-size: 9px; text-transform: uppercase; }
+    .data-table td { padding: 8px; border-bottom: 1px solid var(--card-border); vertical-align: middle; }
 
-    /* Buttons */
-    .btn { padding: 8px 12px; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.15s; }
+    /* Buttons & Controls */
+    .btn { padding: 7px 12px; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
     .btn-accent { background: var(--accent); color: #fff; }
+    .btn-accent:hover { background: var(--accent-hover); }
     .btn-success { background: var(--success); color: #fff; }
     .btn-warning { background: var(--warning); color: #fff; }
     .btn-danger { background: var(--danger); color: #fff; }
     .btn-secondary { background: transparent; border: 1px solid var(--card-border); color: var(--text); }
+    .btn-secondary:hover { background: var(--card-border); }
+
+    /* Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+    .modal-card { background: var(--card); border: 1px solid var(--accent); border-radius: 8px; padding: 20px; max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 14px; }
 
     .seller-mode-active .internal-metric { display: none !important; }
     .hidden { display: none !important; }
@@ -92,14 +112,14 @@
 </head>
 <body>
 
-  <!-- MASTER APPLICATION HEADER -->
+  <!-- MASTER HEADER & TAB NAVIGATION -->
   <header class="app-header">
     <div class="brand">📷 <span>CAMERA ATTICS</span> MASTER TERMINAL</div>
     <nav class="nav-tabs">
-      <button class="nav-tab active" onclick="switchTab('tab-quote')">🤝 Dual-Pane Buying & Quote Hub</button>
-      <button class="nav-tab" onclick="switchTab('tab-express')">⚡ Express Intake</button>
+      <button class="nav-tab active" onclick="switchTab('tab-express')">⚡ Express Intake</button>
+      <button class="nav-tab" onclick="switchTab('tab-quote')">🤝 Dual-Pane Buying & Quote Hub</button>
       <button class="nav-tab" onclick="switchTab('tab-staging')">⏳ In-Process Staging</button>
-      <button class="nav-tab" onclick="switchTab('tab-inventory')">📦 Master Inventory</button>
+      <button class="nav-tab" onclick="switchTab('tab-inventory')">📦 Master Inventory & CSV</button>
       <button class="nav-tab" onclick="switchTab('tab-settings')">⚙️ Settings & Taxonomy</button>
     </nav>
     <div>
@@ -107,89 +127,232 @@
     </div>
   </header>
 
-  <!-- TAB 1: DUAL-PANE BUYING & SELLER QUOTE HUB -->
-  <main id="tab-quote" class="tab-content active">
-    <div class="workspace-grid">
-      
+  <!-- TAB 1: EXPRESS INTAKE (DIRECT-TO-MASTER WITH ALL CATCHES & GUARDS) -->
+  <main id="tab-express" class="tab-content active">
+    <div class="pane">
+      <div class="pane-title">
+        <span>⚡ Express Intake (Direct to Master Inventory)</span>
+        <span style="font-size: 11px; color: var(--accent);" id="express-sku-display">SKU: CAM-1042</span>
+      </div>
+
+      <div class="form-grid">
+        <!-- Classification -->
+        <div class="col-4">
+          <label>Category *</label>
+          <select id="express-category" onchange="onExpressCategoryChange()">
+            <option value="CAM" data-scale="GENERIC">Cameras & Photo (CAM)</option>
+            <option value="OPT" data-scale="GENERIC">Binoculars & Telescopes (OPT)</option>
+            <option value="JWL" data-scale="GENERIC">Jewelry & Watches (JWL)</option>
+            <option value="CNS" data-scale="NUMISMATIC">Coins & Currency (CNS)</option>
+            <option value="BK" data-scale="BOOKS">Antiquarian Books (BK)</option>
+            <option value="VIN" data-scale="VINYL">Vinyl Records (VIN)</option>
+            <option value="CMC" data-scale="COMICS">Comic Books (CMC)</option>
+          </select>
+        </div>
+
+        <div class="col-4">
+          <label>Subcategory</label>
+          <input type="text" id="express-subcategory" placeholder="e.g. 35mm SLR, Telephoto Lens">
+        </div>
+
+        <div class="col-4">
+          <label>Acquisition Source</label>
+          <select id="express-source">
+            <option value="Estate Sale">Estate Sale</option>
+            <option value="Consignment">Consignment</option>
+            <option value="Direct Purchase">Direct Purchase</option>
+            <option value="Family Collection">Family Collection</option>
+          </select>
+        </div>
+
+        <!-- Title with Live 80-Char Counter & Lookup Arrow -->
+        <div class="col-12" style="position:relative;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+            <label style="margin: 0;">Item Name / Model Title (eBay 80-Char Max) *</label>
+            <span class="char-counter" id="title-char-counter">80 left</span>
+          </div>
+          <div class="input-with-arrow">
+            <input type="text" id="express-title" maxlength="80" placeholder="e.g. Vintage Nikon F3 35mm SLR Film Camera Body with 50mm f/1.4 Lens" oninput="onExpressTitleInput(this)">
+            <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete()">▼</button>
+          </div>
+          <div id="express-autocomplete" class="autocomplete-box hidden"></div>
+        </div>
+
+        <!-- Dynamic Condition Scale & Serial Number Duplicate Guard -->
+        <div class="col-4">
+          <label>Condition Grade (<span id="active-scale-label">GENERIC</span>)</label>
+          <select id="express-condition">
+            <!-- Populated dynamically based on category -->
+          </select>
+        </div>
+
+        <div class="col-4">
+          <label>Serial # / Markings</label>
+          <input type="text" id="express-sn" placeholder="SN: 2498102" onblur="checkDuplicateSN(this.value)">
+        </div>
+
+        <div class="col-4">
+          <label>Storage Location</label>
+          <input type="text" id="express-location" placeholder="e.g. Shelf A-4, Bin 12">
+        </div>
+
+        <!-- Defect Penalties -->
+        <div class="col-12" style="background: var(--bg); padding: 8px 10px; border-radius: 4px; border: 1px solid var(--card-border);">
+          <label style="margin-bottom: 6px;">Condition Penalties & Defect Flags</label>
+          <div style="display: flex; gap: 18px; font-size: 11px;">
+            <label style="font-weight: 400; text-transform: none; color: #fff;"><input type="checkbox" id="express-defect-glass" onchange="recalculateExpressPrices()"> Broken Glass / Haze (-25%)</label>
+            <label style="font-weight: 400; text-transform: none; color: #fff;"><input type="checkbox" id="express-defect-parts" onchange="recalculateExpressPrices()"> Missing Key Parts (-20%)</label>
+            <label style="font-weight: 400; text-transform: none; color: #fff;"><input type="checkbox" id="express-defect-untested" onchange="recalculateExpressPrices()"> Untested / As-Is (-30%)</label>
+          </div>
+        </div>
+
+        <!-- Lot Allocation Toggle & COGS Breakdown -->
+        <div class="col-12" style="background: rgba(212,84,50,0.05); padding: 10px; border-radius: 4px; border: 1px solid rgba(212,84,50,0.2);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label style="margin: 0; color: var(--accent);">COGS & Lot Cost Allocation</label>
+            <div style="font-size: 11px; display: flex; gap: 10px;">
+              <label style="font-weight:400; text-transform:none;"><input type="radio" name="lot-type" value="SINGLE" checked onclick="toggleLotMode(false)"> Single Item</label>
+              <label style="font-weight:400; text-transform:none;"><input type="radio" name="lot-type" value="LOT" onclick="toggleLotMode(true)"> Bulk Lot / Box Breakdown</label>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="col-3">
+              <label>Purchase Price ($)</label>
+              <input type="number" id="express-cogs-purchase" value="0.00" oninput="calculateTotalCOGS()">
+            </div>
+            <div class="col-3">
+              <label>Materials Cost ($)</label>
+              <input type="number" id="express-cogs-materials" value="0.00" oninput="calculateTotalCOGS()">
+            </div>
+            <div class="col-3">
+              <label>Labor Hours (hrs)</label>
+              <input type="number" id="express-cogs-labor" value="0.0" step="0.5" oninput="calculateTotalCOGS()">
+            </div>
+            <div class="col-3">
+              <label>Total Calculated COGS</label>
+              <input type="text" id="express-cogs-total" value="$0.00" readonly style="font-weight: 800; color: var(--accent);">
+            </div>
+          </div>
+        </div>
+
+        <!-- Pricing Engine (With Dirty/Clean Lock Protection) -->
+        <div class="col-3">
+          <label>Target Resale ($)</label>
+          <input type="number" id="express-price-resale" value="250.00" oninput="onResaleInputChanged()">
+        </div>
+        <div class="col-3">
+          <label>Target Sell Price ($) <span id="dirty-price-tag" style="color:var(--warning); font-size:8px;" class="hidden">(MANUAL)</span></label>
+          <input type="number" id="express-price-target" value="100.00" oninput="markPriceDirtyExpress()">
+        </div>
+        <div class="col-3">
+          <label>Min Price ($)</label>
+          <input type="number" id="express-price-min" value="80.00">
+        </div>
+        <div class="col-3">
+          <label>Max Price ($)</label>
+          <input type="number" id="express-price-max" value="120.00">
+        </div>
+
+        <!-- Photo Grid & Hero Image Selection -->
+        <div class="col-12">
+          <label>Photos (Tap Thumbnail to Crown as ⭐ HERO/Main Image)</label>
+          <div class="photo-grid" id="express-photo-grid">
+            <div class="photo-thumb is-hero" onclick="setHeroPhoto(0)">📷 Photo 1</div>
+            <div class="photo-thumb" onclick="setHeroPhoto(1)">📷 Photo 2</div>
+            <div class="photo-thumb" onclick="setHeroPhoto(2)">📷 Photo 3</div>
+            <div class="photo-thumb" onclick="setHeroPhoto(3)">+ Add</div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label>Detailed Item Notes</label>
+          <textarea id="express-notes" rows="2" placeholder="Detail optical clarity, shutter speeds, accessories included..."></textarea>
+        </div>
+
+        <div class="col-12" style="display: flex; gap: 10px; margin-top: 6px;">
+          <button class="btn btn-accent" style="flex: 2; padding: 12px;" onclick="saveExpressItem()">💾 Save Directly to Master Inventory</button>
+          <button class="btn btn-secondary" style="flex: 1;" onclick="clearExpressForm()">Clear Form</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- TAB 2: DUAL-PANE BUYING & SELLER QUOTE HUB -->
+  <main id="tab-quote" class="tab-content">
+    <div class="grid-2">
       <!-- LEFT PANE: ITEM EVALUATION & MARKET INTELLIGENCE -->
       <section class="pane">
         <div class="pane-title">
           <span>1. Item Evaluation & Inspection</span>
-          <span style="font-size: 10px; color: var(--muted);" id="sku-preview">SKU: AUTO</span>
+          <span style="font-size: 10px; color: var(--muted);">QUOTE SESSION EVAL</span>
         </div>
 
-        <!-- Warning & Intelligence Panel -->
         <div class="intel-panel internal-metric">
           <span class="badge badge-hot">🔥 HOT | 14 Sold (30d)</span>
-          <span class="badge badge-stock" id="badge-stock-count">📦 3 ON HAND (Age: 92d)</span>
+          <span class="badge badge-stock">📦 3 ON HAND (Age: 92d)</span>
           <span class="badge badge-conf">🎯 AI CONFIDENCE: HIGH (94%)</span>
-          <span class="badge badge-review hidden" id="badge-human-review">🚩 MANDATORY HUMAN REVIEW</span>
+          <span class="badge badge-review hidden" id="quote-review-flag">🚩 HUMAN REVIEW REQUIRED</span>
         </div>
 
         <div class="form-grid">
           <div class="col-6">
             <label>Category *</label>
-            <select id="eval-category" onchange="onCategoryChange()">
+            <select id="quote-category" onchange="onQuoteCategoryChange()">
               <option value="CAM">Cameras & Photo (CAM)</option>
               <option value="JWL">Fine Jewelry & Watches (JWL)</option>
               <option value="CNS">Coins & Currency (CNS)</option>
-              <option value="OPT">Binoculars & Telescopes (OPT)</option>
             </select>
           </div>
           <div class="col-6">
             <label>Subcategory</label>
-            <input type="text" id="eval-subcategory" placeholder="e.g. 35mm Rangefinder">
+            <input type="text" id="quote-subcategory" placeholder="e.g. Rangefinder">
           </div>
 
           <div class="col-12">
             <label>Item Name / Title *</label>
-            <input type="text" id="eval-title" placeholder="Type model title..." oninput="onTitleSearch(this.value)">
+            <input type="text" id="quote-title" placeholder="Type model name...">
           </div>
 
           <div class="col-6">
             <label>Condition Grade</label>
-            <select id="eval-condition" onchange="recalculatePrices()">
-              <option value="EX+">EX+ (Excellent Plus)</option>
-              <option value="EX">EX (Excellent)</option>
-              <option value="BGN">BGN (Bargain)</option>
-              <option value="PARTS">PARTS / AS-IS</option>
+            <select id="quote-condition">
+              <option value="EX+">EX+</option>
+              <option value="EX">EX</option>
+              <option value="BGN">BGN</option>
+              <option value="PARTS">PARTS</option>
             </select>
           </div>
           <div class="col-6">
-            <label>Serial # / Markings</label>
-            <input type="text" id="eval-sn" placeholder="SN: 2498102">
+            <label>Serial Number</label>
+            <input type="text" id="quote-sn" placeholder="SN: 8901248">
           </div>
 
-          <!-- Static Target Resale at Chosen Grade -->
+          <!-- Static Target Resale Display -->
           <div class="col-12 internal-metric" style="background: var(--bg); padding: 8px; border-radius: 4px; border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 11px; font-weight: 700; color: var(--muted);">ESTIMATED RESALE (Grade Grade):</span>
-            <span style="font-size: 16px; font-weight: 800; color: #FFF;" id="static-resale-display">$250.00</span>
+            <span style="font-size: 11px; font-weight: 700; color: var(--muted);">STATIC RESALE BENCHMARK:</span>
+            <span style="font-size: 16px; font-weight: 800; color: #FFF;" id="quote-static-resale">$250.00</span>
           </div>
 
-          <!-- Compact Bi-Directional Bid Offer Inputs -->
-          <div class="col-12" style="display: flex; align-items: center; gap: 12px; background: rgba(212,84,50,0.05); padding: 8px; border-radius: 4px; border: 1px solid rgba(212,84,50,0.2);">
+          <!-- Compact Bi-Directional Bid Offer Calculator -->
+          <div class="col-12" style="display: flex; align-items: center; gap: 10px; background: rgba(212,84,50,0.05); padding: 8px; border-radius: 4px; border: 1px solid rgba(212,84,50,0.2);">
             <div>
               <label>Offer %</label>
-              <input type="number" id="offer-pct" class="input-mini" value="40" oninput="syncOfferFromPct()">
+              <input type="number" id="quote-offer-pct" class="input-mini" value="40" oninput="syncQuoteFromPct()">
             </div>
             <div style="font-weight: 800; color: var(--muted); font-size: 16px;">=</div>
             <div>
               <label>Offer Amount ($)</label>
-              <input type="number" id="offer-amt" class="input-compact" value="100.00" oninput="syncOfferFromAmt()">
+              <input type="number" id="quote-offer-amt" class="input-compact" value="100.00" oninput="syncQuoteFromAmt()">
             </div>
             <div style="margin-left: auto; display: flex; gap: 4px;">
-              <button class="btn btn-secondary" onclick="roundOfferAmount(5)">+$5</button>
-              <button class="btn btn-secondary" onclick="roundOfferAmount(10)">+$10</button>
+              <button class="btn btn-secondary" onclick="roundQuoteOffer(5)">+$5</button>
+              <button class="btn btn-secondary" onclick="roundQuoteOffer(10)">+$10</button>
             </div>
           </div>
 
           <div class="col-12">
-            <label>Inspection Notes / Defects</label>
-            <textarea id="eval-notes" rows="2" placeholder="Note fungus, haze, brassing, or missing parts..."></textarea>
-          </div>
-
-          <div class="col-12">
-            <button class="btn btn-accent" style="width: 100%; padding: 10px;" onclick="addCurrentItemToQuote()">➕ Add Item to Quote ➔</button>
+            <button class="btn btn-accent" style="width: 100%; padding: 10px;" onclick="addQuoteItem()">➕ Add Item to Quote ➔</button>
           </div>
         </div>
       </section>
@@ -201,7 +364,6 @@
           <span style="font-size: 11px; color: var(--accent);">TRANSACTION LOG</span>
         </div>
 
-        <!-- Compliance & Seller ID Capture Section -->
         <div class="form-grid" style="background: var(--bg); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border);">
           <div class="col-4">
             <label>Seller Name *</label>
@@ -212,19 +374,17 @@
             <input type="text" id="seller-phone" placeholder="(512) 555-0192">
           </div>
           <div class="col-4">
-            <label>Driver License / ID #</label>
-            <input type="text" id="seller-id-num" placeholder="DL-89012482">
+            <label>Driver License #</label>
+            <input type="text" id="seller-dl" placeholder="DL-89012482">
           </div>
 
-          <!-- Front/Back DL Photo Scan Dropzone -->
-          <div class="col-12 id-capture-box" onclick="triggerDLScan()">
-            <span style="font-size: 11px; color: var(--muted);">📷 <strong>Scan / Upload Driver License Barcode</strong> (Front & Back Photo Compliance)</span>
-            <input type="file" id="dl-file-input" accept="image/*" class="hidden" onchange="handleDLPhotoUpload(event)">
-            <div id="dl-photo-status" style="font-size: 10px; color: var(--success); margin-top: 4px;" class="hidden">✓ ID Photos Attached</div>
+          <div class="col-12" style="border: 1px dashed var(--card-border); border-radius: 4px; padding: 8px; text-align: center; cursor: pointer;" onclick="triggerDLUpload()">
+            <span style="font-size: 11px; color: var(--muted);">📷 <strong>Scan / Upload Driver License Barcode</strong> (Compliance Front/Back)</span>
+            <input type="file" id="dl-file" class="hidden" onchange="onDLFileSelected()">
+            <div id="dl-status" style="font-size: 10px; color: var(--success); margin-top: 4px;" class="hidden">✓ Driver License Scan Attached</div>
           </div>
         </div>
 
-        <!-- Itemized Running Quote Table -->
         <div style="flex: 1; overflow-y: auto; max-height: 280px; border: 1px solid var(--card-border); border-radius: 4px;">
           <table class="data-table">
             <thead>
@@ -242,78 +402,186 @@
           </table>
         </div>
 
-        <!-- Running Session Totals -->
         <div style="background: var(--bg); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <div style="font-size: 10px; color: var(--muted); font-weight: 700;">TOTAL ITEMS: <span id="total-qty">0</span></div>
-            <div class="internal-metric" style="font-size: 10px; color: var(--muted); font-weight: 700;">EST. RESALE: <span id="total-resale">$0.00</span></div>
+            <div style="font-size: 10px; color: var(--muted); font-weight: 700;">ITEMS: <span id="total-quote-qty">0</span></div>
+            <div class="internal-metric" style="font-size: 10px; color: var(--muted); font-weight: 700;">EST. RESALE: <span id="total-quote-resale">$0.00</span></div>
           </div>
           <div>
             <div style="font-size: 10px; color: var(--muted); font-weight: 700;">TOTAL CASH OFFER</div>
-            <div style="font-size: 18px; font-weight: 800; color: var(--accent);" id="total-offer-amt">$0.00</div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--accent);" id="total-quote-offer">$0.00</div>
           </div>
         </div>
 
-        <!-- Decision Outcomes -->
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
-          <button class="btn btn-success" onclick="commitSession('Bought')">🟢 BOUGHT</button>
-          <button class="btn btn-warning" onclick="commitSession('Hold')">🟡 HOLD</button>
-          <button class="btn btn-danger" onclick="commitSession('Rejected')">🔴 REJECTED</button>
+          <button class="btn btn-success" onclick="commitQuoteSession('Bought')">🟢 BOUGHT</button>
+          <button class="btn btn-warning" onclick="commitQuoteSession('Hold')">🟡 HOLD</button>
+          <button class="btn btn-danger" onclick="commitQuoteSession('Rejected')">🔴 REJECTED</button>
         </div>
       </section>
-
-    </div>
-  </main>
-
-  <!-- TAB 2: EXPRESS INTAKE (FAST DIRECT ENTRY) -->
-  <main id="tab-express" class="tab-content">
-    <div class="pane">
-      <div class="pane-title">⚡ Express Intake (Direct to Master Inventory)</div>
-      <p style="font-size: 12px; color: var(--muted);">Use for fast, trusted single-item logging without entering a staged buying session.</p>
-      <!-- Express form fields mirrored cleanly -->
     </div>
   </main>
 
   <!-- TAB 3: IN-PROCESS STAGING BUFFER -->
   <main id="tab-staging" class="tab-content">
     <div class="pane">
-      <div class="pane-title">⏳ In-Process Staging (Hold / Post / Move-to-Master)</div>
-      <table class="data-table" style="margin-top: 10px;">
+      <div class="pane-title">
+        <span>⏳ In-Process Staging Buffer</span>
+        <button class="btn btn-accent" onclick="processBatchStagingActions()">⚡ Execute Batch Actions</button>
+      </div>
+
+      <table class="data-table">
         <thead>
           <tr>
-            <th>Temp SKU</th>
+            <th>Temp ID</th>
             <th>Item Name</th>
             <th>Source App</th>
-            <th>Offer Price</th>
-            <th>Action Status</th>
+            <th>Offer / COGS</th>
+            <th>Action Selector</th>
           </tr>
         </thead>
-        <tbody>
-          <tr><td colspan="5" style="text-align:center; color: var(--muted); padding: 20px;">In-process staging buffer is currently empty.</td></tr>
+        <tbody id="staging-table-body">
+          <tr>
+            <td>TMP-8901</td>
+            <td><strong>Canon AE-1 Program 35mm Body</strong></td>
+            <td><span class="badge badge-hot">Capture App</span></td>
+            <td>$65.00</td>
+            <td>
+              <select style="padding: 3px 6px; font-size: 10px;">
+                <option value="Pending">Pending Review</option>
+                <option value="Move">Move to Master Inventory</option>
+                <option value="Post">Post & Queue Label</option>
+                <option value="Hold">Hold</option>
+              </select>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
   </main>
 
-  <!-- TAB 4: MASTER INVENTORY & LABELS -->
+  <!-- TAB 4: MASTER INVENTORY & CSV EXPORT -->
   <main id="tab-inventory" class="tab-content">
     <div class="pane">
-      <div class="pane-title">📦 Master Inventory Ledger</div>
-      <p style="font-size: 12px; color: var(--muted);">Full physical inventory ledger. Filter by Status = 'Ready to List' for CSV Exports.</p>
+      <div class="pane-title">
+        <span>📦 Master Inventory Ledger</span>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-success" onclick="exportVoolistCSV()">📥 Export Voolist CSV (Ready to List)</button>
+          <button class="btn btn-secondary" onclick="printLabelsQueue()">🖨️ Print Labels Queue (PDF)</button>
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Item Name</th>
+            <th>Category</th>
+            <th>Grade</th>
+            <th>COGS ($)</th>
+            <th>Target ($)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="inventory-table-body">
+          <tr>
+            <td><strong>CAM-1042</strong></td>
+            <td>Nikon F3 SLR Film Camera Body</td>
+            <td>Cameras (CAM)</td>
+            <td>EX+</td>
+            <td>$120.00</td>
+            <td>$280.00</td>
+            <td><span class="badge badge-conf">Ready to List</span></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </main>
 
-  <!-- TAB 5: SETTINGS & TAXONOMY MANAGEMENT -->
+  <!-- TAB 5: SETTINGS & TAXONOMY ENGINE -->
   <main id="tab-settings" class="tab-content">
-    <div class="pane">
-      <div class="pane-title">⚙️ Category Taxonomy & Human-Review Toggles</div>
-      <p style="font-size: 12px; color: var(--muted);">Manage categories, SKU prefixes, and toggle mandatory human-review flags.</p>
+    <div class="grid-2">
+      <div class="pane">
+        <div class="pane-title">⚙️ Category Hierarchy & Human Review Toggles</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Category Name</th>
+              <th>Human Review Flag</th>
+              <th>Status Switch</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>CAM</td>
+              <td>Cameras & Photo</td>
+              <td><input type="checkbox"> Requires Review</td>
+              <td><button class="btn btn-success" style="padding: 2px 6px; font-size: 9px;">ACTIVE</button></td>
+            </tr>
+            <tr>
+              <td>JWL</td>
+              <td>Fine Jewelry & Watches</td>
+              <td><input type="checkbox" checked> Requires Review</td>
+              <td><button class="btn btn-success" style="padding: 2px 6px; font-size: 9px;">ACTIVE</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pane">
+        <div class="pane-title">🛠️ Category Merge & De-Duplication Tool</div>
+        <p style="font-size: 11px; color: var(--muted);">Merge on-the-fly duplicate categories (e.g. "Mounted Animals" ➔ "Taxidermy") without breaking historical SKU logs.</p>
+        <div class="form-grid">
+          <div class="col-6">
+            <label>Source Category (Duplicate)</label>
+            <input type="text" placeholder="e.g. Mounted Animals">
+          </div>
+          <div class="col-6">
+            <label>Target Master Category</label>
+            <input type="text" placeholder="e.g. Taxidermy">
+          </div>
+          <div class="col-12">
+            <button class="btn btn-warning" style="width: 100%;">Merge & Re-Assign All Inventory Records</button>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
+
+  <!-- SKU RE-PRINT APPROVAL MODAL -->
+  <div id="reprint-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div style="font-size: 14px; font-weight: 800; color: var(--warning);">⚠️ SKU CATEGORY CHANGE WARNING</div>
+      <p style="font-size: 12px; margin: 0; color: var(--text);">
+        Category changed for existing item. A physical barcode label was already printed for <strong id="modal-old-sku">CAM-1042</strong>.
+      </p>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" style="flex: 1;" onclick="closeReprintModal(false)">Keep Existing SKU (CAM-1042)</button>
+        <button class="btn btn-warning" style="flex: 1;" onclick="closeReprintModal(true)">Generate New SKU & Queue Label</button>
+      </div>
+    </div>
+  </div>
 
   <script>
-    let quoteSession = [];
-    let staticBaseResale = 250.00;
+    // Master State Data
+    let isExpressPriceDirty = false;
+    let isSellerView = false;
+    let expressHeroIndex = 0;
+    let quoteList = [];
+    let expressStaticResale = 250.00;
+
+    const DYNAMIC_CONDITION_SCALES = {
+      GENERIC: ['NEW', 'LN', 'LN-', 'EX+', 'EX', 'EX-', 'BGN', 'UGLY', 'AS-IS', 'PARTS'],
+      NUMISMATIC: ['MS-70', 'MS-65', 'MS-60', 'AU-50', 'EF-40', 'VF-20', 'F-12', 'VG-8', 'G-4', 'PR-Proof'],
+      BOOKS: ['Fine', 'Very Good', 'Good', 'Fair', 'Poor', 'Ex-Library'],
+      VINYL: ['Mint (M)', 'Near Mint (NM)', 'Very Good Plus (VG+)', 'Very Good (VG)', 'Good (G)', 'Poor (P)'],
+      COMICS: ['9.8 Near Mint', '9.0 Very Fine', '7.5 Fine', '6.0 Very Good', '4.0 Good', '1.0 Fair']
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      onExpressCategoryChange();
+    });
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -323,70 +591,146 @@
     }
 
     function toggleSellerFlip() {
-      const workspace = document.getElementById('tab-quote');
-      const btn = document.getElementById('btn-seller-flip');
-      workspace.classList.toggle('seller-mode-active');
-      btn.innerText = workspace.classList.contains('seller-mode-active') ? '🔒 Exit Seller View' : '👁️ Flip to Seller View';
+      isSellerView = !isSellerView;
+      document.body.classList.toggle('seller-mode-active');
+      document.getElementById('btn-seller-flip').innerText = isSellerView ? '🔒 Exit Seller View' : '👁️ Flip to Seller View';
     }
 
-    // Dynamic Bid Synchronizer (% updates $, $ updates %)
-    function syncOfferFromPct() {
-      const pct = parseFloat(document.getElementById('offer-pct').value) || 0;
-      const amt = staticBaseResale * (pct / 100);
-      document.getElementById('offer-amt').value = amt.toFixed(2);
+    // Tab 1: Express Intake Functions
+    function onExpressCategoryChange() {
+      const select = document.getElementById('express-category');
+      const selectedOpt = select.options[select.selectedIndex];
+      const scaleKey = selectedOpt.getAttribute('data-scale') || 'GENERIC';
+      const code = select.value;
+
+      document.getElementById('active-scale-label').innerText = scaleKey;
+      document.getElementById('express-sku-display').innerText = `SKU: ${code}-AUTO`;
+
+      const condSelect = document.getElementById('express-condition');
+      condSelect.innerHTML = '';
+      (DYNAMIC_CONDITION_SCALES[scaleKey] || DYNAMIC_CONDITION_SCALES.GENERIC).forEach(opt => {
+        condSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
+      });
     }
 
-    function syncOfferFromAmt() {
-      const amt = parseFloat(document.getElementById('offer-amt').value) || 0;
-      const pct = staticBaseResale > 0 ? (amt / staticBaseResale) * 100 : 0;
-      document.getElementById('offer-pct').value = pct.toFixed(0);
+    function onExpressTitleInput(input) {
+      const remaining = 80 - input.value.length;
+      const counter = document.getElementById('title-char-counter');
+      counter.innerText = `${remaining} left`;
+      counter.className = `char-counter ${remaining < 15 ? (remaining < 5 ? 'danger' : 'warn') : ''}`;
     }
 
-    function roundOfferAmount(step) {
-      let amt = parseFloat(document.getElementById('offer-amt').value) || 0;
+    function checkDuplicateSN(sn) {
+      if (!sn.trim()) return;
+      if (sn === '2498102') {
+        alert(`⚠️ DUPLICATE SERIAL NUMBER: Serial #${sn} already exists on SKU CAM-8921 in Master Inventory.`);
+      }
+    }
+
+    function recalculateExpressPrices() {
+      let penalty = 0;
+      if (document.getElementById('express-defect-glass').checked) penalty += 0.25;
+      if (document.getElementById('express-defect-parts').checked) penalty += 0.20;
+      if (document.getElementById('express-defect-untested').checked) penalty += 0.30;
+
+      const baseResale = parseFloat(document.getElementById('express-price-resale').value) || 0;
+      const adjustedResale = baseResale * (1 - penalty);
+
+      if (!isExpressPriceDirty) {
+        document.getElementById('express-price-target').value = (adjustedResale * 0.40).toFixed(2);
+      }
+    }
+
+    function markPriceDirtyExpress() {
+      isExpressPriceDirty = true;
+      document.getElementById('dirty-price-tag').classList.remove('hidden');
+    }
+
+    function onResaleInputChanged() {
+      isExpressPriceDirty = false;
+      document.getElementById('dirty-price-tag').classList.add('hidden');
+      recalculateExpressPrices();
+    }
+
+    function calculateTotalCOGS() {
+      const purchase = parseFloat(document.getElementById('express-cogs-purchase').value) || 0;
+      const materials = parseFloat(document.getElementById('express-cogs-materials').value) || 0;
+      const labor = parseFloat(document.getElementById('express-cogs-labor').value) || 0;
+      const total = purchase + materials + (labor * 25.00); // $25/hr labor rate
+      document.getElementById('express-cogs-total').value = `$${total.toFixed(2)}`;
+    }
+
+    function setHeroPhoto(index) {
+      const thumbs = document.querySelectorAll('#express-photo-grid .photo-thumb');
+      thumbs.forEach((t, i) => {
+        if (i === index) t.classList.add('is-hero');
+        else t.classList.remove('is-hero');
+      });
+      expressHeroIndex = index;
+    }
+
+    function toggleLotMode(isLot) {
+      if (isLot) alert('Lot breakdown mode activated: Cost allocation will be split across created lot items.');
+    }
+
+    function saveExpressItem() {
+      const title = document.getElementById('express-title').value.trim();
+      if (!title) return alert('Please enter an Item Title before saving.');
+      alert(`Item "${title}" successfully saved directly to Master Inventory ledger.`);
+      clearExpressForm();
+    }
+
+    function clearExpressForm() {
+      document.getElementById('express-title').value = '';
+      document.getElementById('express-sn').value = '';
+      document.getElementById('express-notes').value = '';
+      isExpressPriceDirty = false;
+      document.getElementById('dirty-price-tag').classList.add('hidden');
+      onExpressTitleInput(document.getElementById('express-title'));
+    }
+
+    // Tab 2: Quote Synchronizer & Driver License Capture
+    function syncQuoteFromPct() {
+      const pct = parseFloat(document.getElementById('quote-offer-pct').value) || 0;
+      document.getElementById('quote-offer-amt').value = (expressStaticResale * (pct / 100)).toFixed(2);
+    }
+
+    function syncQuoteFromAmt() {
+      const amt = parseFloat(document.getElementById('quote-offer-amt').value) || 0;
+      document.getElementById('quote-offer-pct').value = ((amt / expressStaticResale) * 100).toFixed(0);
+    }
+
+    function roundQuoteOffer(step) {
+      let amt = parseFloat(document.getElementById('quote-offer-amt').value) || 0;
       amt = Math.ceil(amt / step) * step;
-      document.getElementById('offer-amt').value = amt.toFixed(2);
-      syncOfferFromAmt();
+      document.getElementById('quote-offer-amt').value = amt.toFixed(2);
+      syncQuoteFromAmt();
     }
 
-    function onCategoryChange() {
-      const cat = document.getElementById('eval-category').value;
-      const badge = document.getElementById('badge-human-review');
-      if (cat === 'JWL' || cat === 'CNS') {
-        badge.classList.remove('hidden');
-      } else {
-        badge.classList.add('hidden');
-      }
+    function triggerDLUpload() { document.getElementById('dl-file').click(); }
+    function onDLFileSelected() { document.getElementById('dl-status').classList.remove('hidden'); }
+
+    function addQuoteItem() {
+      const title = document.getElementById('quote-title').value.trim();
+      const amt = parseFloat(document.getElementById('quote-offer-amt').value) || 0;
+      const cond = document.getElementById('quote-condition').value;
+
+      if (!title) return alert('Enter item title.');
+
+      quoteList.push({ title, cond, resale: expressStaticResale, offer: amt });
+      renderQuoteList();
+      document.getElementById('quote-title').value = '';
     }
 
-    function triggerDLScan() { document.getElementById('dl-file-input').click(); }
-    function handleDLPhotoUpload(e) {
-      if (e.target.files.length > 0) {
-        document.getElementById('dl-photo-status').classList.remove('hidden');
-      }
-    }
-
-    function addCurrentItemToQuote() {
-      const title = document.getElementById('eval-title').value.trim();
-      const amt = parseFloat(document.getElementById('offer-amt').value) || 0;
-      const cond = document.getElementById('eval-condition').value;
-
-      if (!title) return alert('Enter item title first.');
-
-      quoteSession.push({ title, cond, resale: staticBaseResale, offer: amt });
-      renderQuoteTable();
-      document.getElementById('eval-title').value = '';
-    }
-
-    function renderQuoteTable() {
+    function renderQuoteList() {
       const tbody = document.getElementById('quote-table-body');
-      if (quoteSession.length === 0) {
+      if (quoteList.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--muted); padding: 15px;">No items in quote session.</td></tr>';
         return;
       }
       tbody.innerHTML = '';
       let totResale = 0, totOffer = 0;
-      quoteSession.forEach((item, idx) => {
+      quoteList.forEach((item, idx) => {
         totResale += item.resale;
         totOffer += item.offer;
         const margin = (((item.resale - item.offer) / item.resale) * 100).toFixed(0);
@@ -396,27 +740,39 @@
             <td>${item.cond}</td>
             <td style="color:var(--accent); font-weight:700;">$${item.offer.toFixed(2)}</td>
             <td class="internal-metric" style="color:var(--success);">${margin}%</td>
-            <td><button class="btn btn-secondary" onclick="removeItem(${idx})">✕</button></td>
+            <td><button class="btn btn-secondary" onclick="removeQuoteItem(${idx})">✕</button></td>
           </tr>
         `;
       });
-      document.getElementById('total-qty').innerText = quoteSession.length;
-      document.getElementById('total-resale').innerText = `$${totResale.toFixed(2)}`;
-      document.getElementById('total-offer-amt').innerText = `$${totOffer.toFixed(2)}`;
+      document.getElementById('total-quote-qty').innerText = quoteList.length;
+      document.getElementById('total-quote-resale').innerText = `$${totResale.toFixed(2)}`;
+      document.getElementById('total-quote-offer').innerText = `$${totOffer.toFixed(2)}`;
     }
 
-    function removeItem(idx) {
-      quoteSession.splice(idx, 1);
-      renderQuoteTable();
+    function removeQuoteItem(idx) {
+      quoteList.splice(idx, 1);
+      renderQuoteList();
     }
 
-    function commitSession(type) {
+    function commitQuoteSession(type) {
       const seller = document.getElementById('seller-name').value.trim();
-      if (!seller) return alert('Enter seller name.');
-      if (quoteSession.length === 0) return alert('Add at least 1 item.');
-      alert(`Quote committed as [${type}] for ${seller}.`);
-      quoteSession = [];
-      renderQuoteTable();
+      if (!seller) return alert('Enter seller name first.');
+      if (quoteList.length === 0) return alert('Add at least one item.');
+      alert(`Quote session committed as [${type}] for seller: ${seller}.`);
+      quoteList = [];
+      renderQuoteList();
+    }
+
+    function processBatchStagingActions() {
+      alert('Executing batch actions on staged items: Move to Master & Queue Labels.');
+    }
+
+    function exportVoolistCSV() {
+      alert('Generating Voolist-formatted CSV export for all items with Status = "Ready to List"...');
+    }
+
+    function printLabelsQueue() {
+      alert('Generating PDF print queue with scannable QR labels...');
     }
   </script>
 </body>
