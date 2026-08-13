@@ -180,12 +180,12 @@
             
             <div class="col-12 section-header">1. Classification & Identity</div>
 
-            <!-- SEARCHABLE CATEGORY AUTOCOMPLETE INPUT -->
+            <!-- FULL DROPDOWN CATEGORY SELECTOR -->
             <div class="col-3">
               <label>Category *</label>
-              <input type="text" id="category-search" list="category-datalist" placeholder="Type or select category..." onchange="onCategorySelected()">
-              <datalist id="category-datalist"></datalist>
-              <input type="hidden" id="item-category">
+              <select id="item-category" onchange="autoGenerateSKU()">
+                <option value="">Loading categories...</option>
+              </select>
             </div>
 
             <div class="col-3">
@@ -198,7 +198,7 @@
               <input type="text" id="item-sku" placeholder="Auto / Manual SKU" onchange="lookupSKU()" onblur="lookupSKU()">
             </div>
 
-            <!-- TITLE FIELD WITH DROPDOWN ARROW TOGGLE BUTTON -->
+            <!-- TITLE FIELD WITH VISUAL AUTOCOMPLETE AND TOGGLE -->
             <div class="col-4 autocomplete-wrapper">
               <label>Item Name / Model Title *</label>
               <div class="input-with-arrow">
@@ -402,7 +402,7 @@
 
       const nameInput = document.getElementById('item-name');
       if (nameInput) {
-        nameInput.addEventListener('input', debounce(lookupCatalogTitle, 300));
+        nameInput.addEventListener('input', debounce(lookupCatalogTitle, 250));
       }
 
       document.addEventListener('click', (e) => {
@@ -503,31 +503,24 @@
       if (tabId === 'inventory-tab') loadInventory();
     }
 
-    // SEARCHABLE CATEGORIES LOGIC
+    // CATEGORIES DROPDOWN LOADER
     async function loadCategories() {
-      const { data } = await supabaseClient.from('item_categories').select('*').order('category_name');
-      const datalist = document.getElementById('category-datalist');
-      datalist.innerHTML = '';
+      const { data, error } = await supabaseClient.from('item_categories').select('*').order('category_name');
+      const select = document.getElementById('item-category');
+      select.innerHTML = '<option value="">Select Category...</option>';
+      if (error) {
+        console.error("Error loading categories:", error);
+        return;
+      }
       if (data && data.length > 0) {
         loadedCategories = data;
         data.forEach(c => {
-          datalist.innerHTML += `<option data-id="${c.category_id}" value="${c.category_name}"></option>`;
+          select.innerHTML += `<option value="${c.category_id}">${c.category_name}</option>`;
         });
       }
     }
 
-    function onCategorySelected() {
-      const val = document.getElementById('category-search').value;
-      const matched = loadedCategories.find(c => c.category_name.toLowerCase() === val.toLowerCase());
-      if (matched) {
-        document.getElementById('item-category').value = matched.category_id;
-        autoGenerateSKU();
-      } else {
-        document.getElementById('item-category').value = '';
-      }
-    }
-
-    // ITEM TITLE AUTOCOMPLETE & TOGGLE BUTTON
+    // ITEM TITLE SEARCH & AUTOCOMPLETE
     function toggleTitleDropdown() {
       const listContainer = document.getElementById('autocomplete-list');
       if (listContainer.classList.contains('hidden')) {
@@ -550,6 +543,11 @@
       const { data, error } = await supabaseClient.rpc('search_catalog_benchmarks', {
         search_term: titleInput
       });
+
+      if (error) {
+        console.error("Catalog Search RPC Error:", error);
+        return;
+      }
 
       if (data && data.length > 0) {
         listContainer.innerHTML = '';
@@ -580,11 +578,7 @@
             }
 
             if (match.ebay_category_id) {
-              const matchedCat = loadedCategories.find(c => c.category_id === match.ebay_category_id);
-              if (matchedCat) {
-                document.getElementById('category-search').value = matchedCat.category_name;
-                document.getElementById('item-category').value = matchedCat.category_id;
-              }
+              document.getElementById('item-category').value = match.ebay_category_id;
               autoGenerateSKU();
             }
 
@@ -640,8 +634,6 @@
       if (data) {
         document.getElementById('item-name').value = data.item_name || '';
         document.getElementById('item-category').value = data.category_id || '';
-        const catObj = loadedCategories.find(c => c.category_id === data.category_id);
-        if (catObj) document.getElementById('category-search').value = catObj.category_name;
         document.getElementById('item-condition').value = data.condition_grade || 'EX+';
         document.getElementById('item-price').value = data.target_sell_price || '';
         document.getElementById('item-notes').value = data.notes || '';
@@ -706,7 +698,6 @@
         alert(`Item saved cleanly to inventory ledger with SKU: ${sku}`);
         document.getElementById('item-name').value = '';
         document.getElementById('item-subcategory').value = '';
-        document.getElementById('category-search').value = '';
         document.getElementById('item-category').value = '';
         document.getElementById('item-sku').value = '';
         document.getElementById('item-bill-of-sale').value = '';
