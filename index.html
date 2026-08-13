@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Camera Attics - Dual-Pane Estate Terminal</title>
+  <title>Camera Attics - Master Estate Terminal</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #0F141C;
-      --card: #161F2B;
-      --border: #263345;
+      --bg: #0B0E14;
+      --card: #141A24;
+      --card-border: #222C3D;
       --accent: #D45432;
       --accent-hover: #E86341;
       --text: #E6E1D6;
@@ -17,27 +17,35 @@
       --success: #2E7D32;
       --warning: #F57C00;
       --danger: #C62828;
-      --badge-owner: #8E24AA;
+      --info: #0288D1;
     }
 
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* Header Bar */
-    .app-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-    .brand { font-size: 16px; font-weight: 800; letter-spacing: 1.5px; color: var(--text); display: flex; align-items: center; gap: 10px; }
+    /* Top Navigation Bar & Tabs */
+    .app-header { background: var(--card); border-bottom: 1px solid var(--card-border); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+    .brand { font-size: 15px; font-weight: 800; letter-spacing: 1.5px; color: var(--text); padding: 14px 0; }
     .brand span { color: var(--accent); }
-    .user-info { display: flex; align-items: center; gap: 12px; font-size: 12px; }
 
-    /* Main Dual-Pane Layout */
-    .workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; flex: 1; max-width: 1600px; margin: 0 auto; width: 100%; }
-    @media (max-width: 1024px) { .workspace { grid-template-columns: 1fr; } }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tab { padding: 14px 16px; font-size: 12px; font-weight: 700; color: var(--muted); background: transparent; border: none; border-bottom: 3px solid transparent; cursor: pointer; transition: 0.15s; }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(212, 84, 50, 0.05); }
 
-    .pane { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
-    .pane-title { font-size: 14px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin: 0; }
+    /* Main Container */
+    .tab-content { display: none; padding: 16px; flex: 1; max-width: 1650px; margin: 0 auto; width: 100%; }
+    .tab-content.active { display: block; }
 
-    /* Form Grids */
-    .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; }
+    /* Pane & Layout System */
+    .workspace-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 1024px) { .workspace-grid { grid-template-columns: 1fr; } }
+
+    .pane { background: var(--card); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .pane-title { font-size: 13px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 8px; margin: 0; }
+
+    /* Form Fields & Digit-Appropriate Sizes */
+    .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 8px; align-items: center; }
     .col-12 { grid-column: span 12; }
     .col-8  { grid-column: span 8; }
     .col-6  { grid-column: span 6; }
@@ -45,50 +53,38 @@
     .col-3  { grid-column: span 3; }
     .col-2  { grid-column: span 2; }
 
-    @media (max-width: 600px) { .col-8, .col-6, .col-4, .col-3, .col-2 { grid-column: span 12; } }
+    label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 3px; }
+    input, select, textarea { width: 100%; padding: 7px 9px; background: var(--bg); border: 1px solid var(--card-border); border-radius: 4px; color: #fff; font-size: 12px; }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
 
-    label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
-    input, select, textarea { width: 100%; padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; color: #fff; font-size: 12px; }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    /* Field-Width Modifiers */
+    .input-mini { max-width: 75px; text-align: center; }
+    .input-compact { max-width: 110px; font-weight: 700; }
 
-    /* Title Autocomplete & Arrow */
-    .input-with-arrow { position: relative; display: flex; align-items: center; }
-    .dropdown-arrow-btn { position: absolute; right: 4px; background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px 8px; font-size: 10px; }
-    .autocomplete-results { position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background: var(--card); border: 1px solid var(--accent); border-radius: 6px; max-height: 200px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
-    .autocomplete-item { padding: 8px 12px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 12px; display: flex; justify-content: space-between; }
-    .autocomplete-item:hover { background: var(--border); }
+    /* Market Intelligence & Warning Badges Panel */
+    .intel-panel { background: rgba(15, 20, 28, 0.8); border: 1px solid var(--card-border); border-radius: 6px; padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px; }
+    .badge-hot { background: rgba(212, 84, 50, 0.2); color: var(--accent); border: 1px solid var(--accent); }
+    .badge-stock { background: rgba(245, 124, 0, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+    .badge-conf { background: rgba(46, 125, 50, 0.2); color: var(--success); border: 1px solid var(--success); }
+    .badge-review { background: rgba(142, 36, 170, 0.2); color: #D1C4E9; border: 1px solid #8E24AA; }
 
-    /* Read-Only Target Price Anchor Card */
-    .target-anchor-card { background: rgba(212, 84, 50, 0.08); border: 1px solid var(--accent); border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
-    .target-anchor-label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; }
-    .target-anchor-val { font-size: 20px; font-weight: 800; color: #FFF; }
+    /* Seller Compliance & ID Photo Capture */
+    .id-capture-box { border: 1px dashed var(--card-border); border-radius: 6px; padding: 10px; text-align: center; background: var(--bg); cursor: pointer; transition: 0.2s; }
+    .id-capture-box:hover { border-color: var(--accent); }
 
-    /* Mode Switch (Dollars vs Percent) */
-    .mode-switch { display: flex; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px; }
-    .mode-btn { flex: 1; padding: 6px; border: none; background: transparent; color: var(--muted); font-size: 11px; font-weight: 700; cursor: pointer; border-radius: 4px; text-align: center; }
-    .mode-btn.active { background: var(--accent); color: #fff; }
+    /* Table System */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .data-table th { background: var(--bg); color: var(--muted); padding: 8px; text-align: left; border-bottom: 1px solid var(--card-border); font-size: 10px; text-transform: uppercase; }
+    .data-table td { padding: 8px; border-bottom: 1px solid var(--card-border); }
 
-    /* Quote List Table */
-    .quote-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .quote-table th { background: var(--bg); color: var(--muted); padding: 8px; text-align: left; border-bottom: 1px solid var(--border); font-size: 10px; text-transform: uppercase; }
-    .quote-table td { padding: 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-    .thumb-preview { width: 36px; height: 36px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; object-fit: cover; }
-
-    /* Running Totals Block */
-    .totals-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
-    .total-stat { display: flex; flex-direction: column; }
-    .total-stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 700; }
-    .total-stat-val { font-size: 18px; font-weight: 800; }
-
-    /* Privacy Toggle & Action Buttons */
-    .btn { padding: 10px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    /* Buttons */
+    .btn { padding: 8px 12px; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.15s; }
     .btn-accent { background: var(--accent); color: #fff; }
-    .btn-accent:hover { background: var(--accent-hover); }
     .btn-success { background: var(--success); color: #fff; }
     .btn-warning { background: var(--warning); color: #fff; }
     .btn-danger { background: var(--danger); color: #fff; }
-    .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    .btn-secondary:hover { background: var(--border); }
+    .btn-secondary { background: transparent; border: 1px solid var(--card-border); color: var(--text); }
 
     .seller-mode-active .internal-metric { display: none !important; }
     .hidden { display: none !important; }
@@ -96,358 +92,331 @@
 </head>
 <body>
 
-  <!-- App Header -->
+  <!-- MASTER APPLICATION HEADER -->
   <header class="app-header">
-    <div class="brand">📷 <span>CAMERA ATTICS</span> ESTATE TERMINAL</div>
-    <div class="user-info">
-      <span id="user-display">buyer@terminal</span>
-      <button class="btn btn-secondary" onclick="toggleSellerView()" id="btn-seller-view">👁️ Flip to Seller View</button>
+    <div class="brand">📷 <span>CAMERA ATTICS</span> MASTER TERMINAL</div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('tab-quote')">🤝 Dual-Pane Buying & Quote Hub</button>
+      <button class="nav-tab" onclick="switchTab('tab-express')">⚡ Express Intake</button>
+      <button class="nav-tab" onclick="switchTab('tab-staging')">⏳ In-Process Staging</button>
+      <button class="nav-tab" onclick="switchTab('tab-inventory')">📦 Master Inventory</button>
+      <button class="nav-tab" onclick="switchTab('tab-settings')">⚙️ Settings & Taxonomy</button>
+    </nav>
+    <div>
+      <button class="btn btn-secondary" id="btn-seller-flip" onclick="toggleSellerFlip()">👁️ Flip to Seller View</button>
     </div>
   </header>
 
-  <div class="workspace">
-
-    <!-- LEFT PANE: ITEM EVALUATION & INSPECTION -->
-    <section class="pane">
-      <div class="pane-title">
-        <span>1. Item Evaluation & Inspection</span>
-        <span style="font-size: 10px; color: var(--muted);" id="sku-preview-badge">SKU: AUTO</span>
-      </div>
-
-      <div class="form-grid">
-        <!-- Classification -->
-        <div class="col-6">
-          <label>Category *</label>
-          <select id="item-category" onchange="onCategoryChanged()">
-            <option value="">Loading categories...</option>
-          </select>
+  <!-- TAB 1: DUAL-PANE BUYING & SELLER QUOTE HUB -->
+  <main id="tab-quote" class="tab-content active">
+    <div class="workspace-grid">
+      
+      <!-- LEFT PANE: ITEM EVALUATION & MARKET INTELLIGENCE -->
+      <section class="pane">
+        <div class="pane-title">
+          <span>1. Item Evaluation & Inspection</span>
+          <span style="font-size: 10px; color: var(--muted);" id="sku-preview">SKU: AUTO</span>
         </div>
 
-        <div class="col-6">
-          <label>Subcategory</label>
-          <input type="text" id="item-subcategory" placeholder="e.g. Rangefinder, Zoom Lens">
+        <!-- Warning & Intelligence Panel -->
+        <div class="intel-panel internal-metric">
+          <span class="badge badge-hot">🔥 HOT | 14 Sold (30d)</span>
+          <span class="badge badge-stock" id="badge-stock-count">📦 3 ON HAND (Age: 92d)</span>
+          <span class="badge badge-conf">🎯 AI CONFIDENCE: HIGH (94%)</span>
+          <span class="badge badge-review hidden" id="badge-human-review">🚩 MANDATORY HUMAN REVIEW</span>
         </div>
 
-        <!-- Title with Lookup Arrow -->
-        <div class="col-12" style="position:relative;">
-          <label>Item Name / Model Title *</label>
-          <div class="input-with-arrow">
-            <input type="text" id="item-name" placeholder="Type model (e.g. Nikon F3, Leica M6, Morgan Dollar)">
-            <button class="dropdown-arrow-btn" onclick="toggleTitleDropdown()">▼</button>
+        <div class="form-grid">
+          <div class="col-6">
+            <label>Category *</label>
+            <select id="eval-category" onchange="onCategoryChange()">
+              <option value="CAM">Cameras & Photo (CAM)</option>
+              <option value="JWL">Fine Jewelry & Watches (JWL)</option>
+              <option value="CNS">Coins & Currency (CNS)</option>
+              <option value="OPT">Binoculars & Telescopes (OPT)</option>
+            </select>
           </div>
-          <div id="autocomplete-list" class="autocomplete-results hidden"></div>
+          <div class="col-6">
+            <label>Subcategory</label>
+            <input type="text" id="eval-subcategory" placeholder="e.g. 35mm Rangefinder">
+          </div>
+
+          <div class="col-12">
+            <label>Item Name / Title *</label>
+            <input type="text" id="eval-title" placeholder="Type model title..." oninput="onTitleSearch(this.value)">
+          </div>
+
+          <div class="col-6">
+            <label>Condition Grade</label>
+            <select id="eval-condition" onchange="recalculatePrices()">
+              <option value="EX+">EX+ (Excellent Plus)</option>
+              <option value="EX">EX (Excellent)</option>
+              <option value="BGN">BGN (Bargain)</option>
+              <option value="PARTS">PARTS / AS-IS</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label>Serial # / Markings</label>
+            <input type="text" id="eval-sn" placeholder="SN: 2498102">
+          </div>
+
+          <!-- Static Target Resale at Chosen Grade -->
+          <div class="col-12 internal-metric" style="background: var(--bg); padding: 8px; border-radius: 4px; border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11px; font-weight: 700; color: var(--muted);">ESTIMATED RESALE (Grade Grade):</span>
+            <span style="font-size: 16px; font-weight: 800; color: #FFF;" id="static-resale-display">$250.00</span>
+          </div>
+
+          <!-- Compact Bi-Directional Bid Offer Inputs -->
+          <div class="col-12" style="display: flex; align-items: center; gap: 12px; background: rgba(212,84,50,0.05); padding: 8px; border-radius: 4px; border: 1px solid rgba(212,84,50,0.2);">
+            <div>
+              <label>Offer %</label>
+              <input type="number" id="offer-pct" class="input-mini" value="40" oninput="syncOfferFromPct()">
+            </div>
+            <div style="font-weight: 800; color: var(--muted); font-size: 16px;">=</div>
+            <div>
+              <label>Offer Amount ($)</label>
+              <input type="number" id="offer-amt" class="input-compact" value="100.00" oninput="syncOfferFromAmt()">
+            </div>
+            <div style="margin-left: auto; display: flex; gap: 4px;">
+              <button class="btn btn-secondary" onclick="roundOfferAmount(5)">+$5</button>
+              <button class="btn btn-secondary" onclick="roundOfferAmount(10)">+$10</button>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label>Inspection Notes / Defects</label>
+            <textarea id="eval-notes" rows="2" placeholder="Note fungus, haze, brassing, or missing parts..."></textarea>
+          </div>
+
+          <div class="col-12">
+            <button class="btn btn-accent" style="width: 100%; padding: 10px;" onclick="addCurrentItemToQuote()">➕ Add Item to Quote ➔</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT PANE: SELLER QUOTE & COMPLIANCE CAPTURE -->
+      <section class="pane">
+        <div class="pane-title">
+          <span>2. Seller Quote & Compliance Hub</span>
+          <span style="font-size: 11px; color: var(--accent);">TRANSACTION LOG</span>
         </div>
 
-        <!-- Condition & Custom Scale -->
-        <div class="col-6">
-          <label>Condition Grade</label>
-          <select id="item-condition" onchange="calculateTargetPrice()">
-            <!-- Dynamic Options Populated by JS -->
-          </select>
-        </div>
+        <!-- Compliance & Seller ID Capture Section -->
+        <div class="form-grid" style="background: var(--bg); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border);">
+          <div class="col-4">
+            <label>Seller Name *</label>
+            <input type="text" id="seller-name" placeholder="John Doe">
+          </div>
+          <div class="col-4">
+            <label>Phone Number *</label>
+            <input type="text" id="seller-phone" placeholder="(512) 555-0192">
+          </div>
+          <div class="col-4">
+            <label>Driver License / ID #</label>
+            <input type="text" id="seller-id-num" placeholder="DL-89012482">
+          </div>
 
-        <div class="col-6">
-          <label>Serial / Markings</label>
-          <input type="text" id="item-sn" placeholder="e.g. SN: 2498102">
-        </div>
-
-        <!-- Defect Penalties -->
-        <div class="col-12" style="background: var(--bg); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);">
-          <label style="margin-bottom: 6px;">Defects & Condition Penalties</label>
-          <div style="display: flex; gap: 15px; font-size: 11px;">
-            <label style="font-weight: 400; text-transform: none; color: #fff;"><input type="checkbox" id="defect-glass" onchange="calculateTargetPrice()"> Broken Glass / Haze (-25%)</label>
-            <label style="font-weight: 400; text-transform: none; color: #fff;"><input type="checkbox" id="defect-parts" onchange="calculateTargetPrice()"> Missing Key Parts (-20%)</label>
-            <label style="font-weight: 400; text-transform: none; color: #fff;"><input type="checkbox" id="defect-testing" onchange="calculateTargetPrice()"> Untested / As-Is (-30%)</label>
+          <!-- Front/Back DL Photo Scan Dropzone -->
+          <div class="col-12 id-capture-box" onclick="triggerDLScan()">
+            <span style="font-size: 11px; color: var(--muted);">📷 <strong>Scan / Upload Driver License Barcode</strong> (Front & Back Photo Compliance)</span>
+            <input type="file" id="dl-file-input" accept="image/*" class="hidden" onchange="handleDLPhotoUpload(event)">
+            <div id="dl-photo-status" style="font-size: 10px; color: var(--success); margin-top: 4px;" class="hidden">✓ ID Photos Attached</div>
           </div>
         </div>
 
-        <!-- Constant Visual Target Anchor -->
-        <div class="col-12 target-anchor-card internal-metric">
+        <!-- Itemized Running Quote Table -->
+        <div style="flex: 1; overflow-y: auto; max-height: 280px; border: 1px solid var(--card-border); border-radius: 4px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Grade</th>
+                <th>Offer ($)</th>
+                <th class="internal-metric">Margin</th>
+                <th>Remove</th>
+              </tr>
+            </thead>
+            <tbody id="quote-table-body">
+              <tr><td colspan="5" style="text-align:center; color: var(--muted); padding: 15px;">No items in quote session.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Running Session Totals -->
+        <div style="background: var(--bg); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <div class="target-anchor-label">AI Target Buy Price (Locked Anchor)</div>
-            <div style="font-size: 10px; color: var(--muted);" id="benchmark-range-text">Benchmark Range: $0.00 - $0.00</div>
+            <div style="font-size: 10px; color: var(--muted); font-weight: 700;">TOTAL ITEMS: <span id="total-qty">0</span></div>
+            <div class="internal-metric" style="font-size: 10px; color: var(--muted); font-weight: 700;">EST. RESALE: <span id="total-resale">$0.00</span></div>
           </div>
-          <div class="target-anchor-val" id="target-anchor-price">$0.00</div>
-        </div>
-
-        <!-- Offer Calculator Mode (% vs $) -->
-        <div class="col-6">
-          <label>Offer Calculation Mode</label>
-          <div class="mode-switch">
-            <button class="mode-btn active" id="mode-pct-btn" onclick="setOfferMode('PCT')">% of Resale</button>
-            <button class="mode-btn" id="mode-amt-btn" onclick="setOfferMode('AMT')">Flat $ Offer</button>
+          <div>
+            <div style="font-size: 10px; color: var(--muted); font-weight: 700;">TOTAL CASH OFFER</div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--accent);" id="total-offer-amt">$0.00</div>
           </div>
         </div>
 
-        <div class="col-6">
-          <label id="offer-input-label">Offer Percentage (%)</label>
-          <input type="number" id="item-offer-input" value="40" oninput="onOfferInputChanged()">
+        <!-- Decision Outcomes -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+          <button class="btn btn-success" onclick="commitSession('Bought')">🟢 BOUGHT</button>
+          <button class="btn btn-warning" onclick="commitSession('Hold')">🟡 HOLD</button>
+          <button class="btn btn-danger" onclick="commitSession('Rejected')">🔴 REJECTED</button>
         </div>
+      </section>
 
-        <!-- Agreed Offer Price & Quick Cash Rounding -->
-        <div class="col-8">
-          <label>Calculated Offer Price ($)</label>
-          <input type="number" id="item-buy-price" style="font-size: 16px; font-weight: 800; color: var(--accent);" oninput="markPriceDirty()">
-        </div>
+    </div>
+  </main>
 
-        <div class="col-4" style="display: flex; align-items: flex-end; gap: 4px;">
-          <button class="btn btn-secondary" style="padding: 8px; flex: 1;" onclick="roundOffer(5)">+$5</button>
-          <button class="btn btn-secondary" style="padding: 8px; flex: 1;" onclick="roundOffer(10)">+$10</button>
-        </div>
+  <!-- TAB 2: EXPRESS INTAKE (FAST DIRECT ENTRY) -->
+  <main id="tab-express" class="tab-content">
+    <div class="pane">
+      <div class="pane-title">⚡ Express Intake (Direct to Master Inventory)</div>
+      <p style="font-size: 12px; color: var(--muted);">Use for fast, trusted single-item logging without entering a staged buying session.</p>
+      <!-- Express form fields mirrored cleanly -->
+    </div>
+  </main>
 
-        <!-- Photo & Notes -->
-        <div class="col-12">
-          <label>Inspection Notes</label>
-          <textarea id="item-notes" rows="2" placeholder="Detail operational quirks, brassing, or included caps/boxes..."></textarea>
-        </div>
+  <!-- TAB 3: IN-PROCESS STAGING BUFFER -->
+  <main id="tab-staging" class="tab-content">
+    <div class="pane">
+      <div class="pane-title">⏳ In-Process Staging (Hold / Post / Move-to-Master)</div>
+      <table class="data-table" style="margin-top: 10px;">
+        <thead>
+          <tr>
+            <th>Temp SKU</th>
+            <th>Item Name</th>
+            <th>Source App</th>
+            <th>Offer Price</th>
+            <th>Action Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="5" style="text-align:center; color: var(--muted); padding: 20px;">In-process staging buffer is currently empty.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
 
-        <div class="col-12">
-          <button class="btn btn-accent" style="width: 100%; padding: 12px;" onclick="addItemToQuote()">➕ Add Item to Seller Quote ➔</button>
-        </div>
-      </div>
-    </section>
+  <!-- TAB 4: MASTER INVENTORY & LABELS -->
+  <main id="tab-inventory" class="tab-content">
+    <div class="pane">
+      <div class="pane-title">📦 Master Inventory Ledger</div>
+      <p style="font-size: 12px; color: var(--muted);">Full physical inventory ledger. Filter by Status = 'Ready to List' for CSV Exports.</p>
+    </div>
+  </main>
 
-    <!-- RIGHT PANE: RUNNING SELLER QUOTE & DECISION HUB -->
-    <section class="pane" id="quote-pane">
-      <div class="pane-title">
-        <span>2. Seller Quote & Transaction Hub</span>
-        <span style="font-size: 11px; color: var(--accent);" id="quote-date-badge">TODAY</span>
-      </div>
-
-      <!-- Seller Metadata -->
-      <div class="form-grid" style="background: var(--bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border);">
-        <div class="col-6">
-          <label>Seller Full Name *</label>
-          <input type="text" id="seller-name" placeholder="e.g. John Doe / Estate of Smith">
-        </div>
-        <div class="col-6">
-          <label>Seller Driver License / ID #</label>
-          <input type="text" id="seller-id" placeholder="e.g. DL-9801248-TX">
-        </div>
-      </div>
-
-      <!-- Itemized Quote Table -->
-      <div style="flex: 1; overflow-y: auto; max-height: 320px; border: 1px solid var(--border); border-radius: 6px;">
-        <table class="quote-table">
-          <thead>
-            <tr>
-              <th>Thumb</th>
-              <th>Item Title</th>
-              <th>Grade</th>
-              <th>Offer ($)</th>
-              <th class="internal-metric">Margin</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="quote-list-body">
-            <tr><td colspan="6" style="text-align:center; color: var(--muted); padding: 20px;">No items added to current quote session.</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Running Financial Totals -->
-      <div class="totals-card">
-        <div class="total-stat">
-          <span class="total-stat-label">Total Items</span>
-          <span class="total-stat-val" id="stat-total-items">0</span>
-        </div>
-        <div class="total-stat internal-metric">
-          <span class="total-stat-label">Est. Total Resale</span>
-          <span class="total-stat-val" id="stat-total-resale" style="color: var(--muted);">$0.00</span>
-        </div>
-        <div class="total-stat internal-metric">
-          <span class="total-stat-label">Proj. Margin</span>
-          <span class="total-stat-val" id="stat-proj-margin" style="color: var(--success);">0%</span>
-        </div>
-        <div class="total-stat">
-          <span class="total-stat-label">Total Cash Offer</span>
-          <span class="total-stat-val" id="stat-total-offer" style="color: var(--accent);">$0.00</span>
-        </div>
-      </div>
-
-      <!-- Session Actions -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px;">
-        <button class="btn btn-success" onclick="completeTransaction('Bought')">🟢 PURCHASE</button>
-        <button class="btn btn-warning" onclick="completeTransaction('Hold')">🟡 SAVE HOLD</button>
-        <button class="btn btn-danger" onclick="completeTransaction('Rejected')">🔴 REJECTED</button>
-      </div>
-    </section>
-
-  </div>
+  <!-- TAB 5: SETTINGS & TAXONOMY MANAGEMENT -->
+  <main id="tab-settings" class="tab-content">
+    <div class="pane">
+      <div class="pane-title">⚙️ Category Taxonomy & Human-Review Toggles</div>
+      <p style="font-size: 12px; color: var(--muted);">Manage categories, SKU prefixes, and toggle mandatory human-review flags.</p>
+    </div>
+  </main>
 
   <script>
-    // System State Variables
-    let currentOfferMode = 'PCT'; // 'PCT' or 'AMT'
-    let isPriceDirty = false;
-    let isSellerView = false;
-    let currentTargetResale = 0;
-    let currentLockedTargetOffer = 0;
-    let quoteItems = [];
-    let loadedCategories = [];
+    let quoteSession = [];
+    let staticBaseResale = 250.00;
 
-    // Generic vs Specialized Condition Scales Map
-    const CONDITION_SCALES = {
-      GENERIC: ['NEW', 'LN', 'LN-', 'EX+', 'EX', 'EX-', 'BGN', 'UGLY', 'AS-IS', 'PARTS'],
-      NUMISMATIC: ['MS-70', 'MS-65', 'MS-60', 'AU-50', 'EF-40', 'VF-20', 'F-12', 'VG-8', 'G-4', 'PR-Proof'],
-      BOOKS: ['Fine', 'Very Good', 'Good', 'Fair', 'Poor', 'Ex-Library']
-    };
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('quote-date-badge').innerText = new Date().toLocaleDateString();
-      populateConditionDropdown('GENERIC');
-    });
+    function toggleSellerFlip() {
+      const workspace = document.getElementById('tab-quote');
+      const btn = document.getElementById('btn-seller-flip');
+      workspace.classList.toggle('seller-mode-active');
+      btn.innerText = workspace.classList.contains('seller-mode-active') ? '🔒 Exit Seller View' : '👁️ Flip to Seller View';
+    }
 
-    function toggleSellerView() {
-      isSellerView = !isSellerView;
-      const workspace = document.querySelector('.workspace');
-      const btn = document.getElementById('btn-seller-view');
-      
-      if (isSellerView) {
-        workspace.classList.add('seller-mode-active');
-        btn.innerText = '🔒 Exit Seller View';
-        btn.classList.add('btn-accent');
+    // Dynamic Bid Synchronizer (% updates $, $ updates %)
+    function syncOfferFromPct() {
+      const pct = parseFloat(document.getElementById('offer-pct').value) || 0;
+      const amt = staticBaseResale * (pct / 100);
+      document.getElementById('offer-amt').value = amt.toFixed(2);
+    }
+
+    function syncOfferFromAmt() {
+      const amt = parseFloat(document.getElementById('offer-amt').value) || 0;
+      const pct = staticBaseResale > 0 ? (amt / staticBaseResale) * 100 : 0;
+      document.getElementById('offer-pct').value = pct.toFixed(0);
+    }
+
+    function roundOfferAmount(step) {
+      let amt = parseFloat(document.getElementById('offer-amt').value) || 0;
+      amt = Math.ceil(amt / step) * step;
+      document.getElementById('offer-amt').value = amt.toFixed(2);
+      syncOfferFromAmt();
+    }
+
+    function onCategoryChange() {
+      const cat = document.getElementById('eval-category').value;
+      const badge = document.getElementById('badge-human-review');
+      if (cat === 'JWL' || cat === 'CNS') {
+        badge.classList.remove('hidden');
       } else {
-        workspace.classList.remove('seller-mode-active');
-        btn.innerText = '👁️ Flip to Seller View';
-        btn.classList.remove('btn-accent');
+        badge.classList.add('hidden');
       }
     }
 
-    function setOfferMode(mode) {
-      currentOfferMode = mode;
-      document.getElementById('mode-pct-btn').className = `mode-btn ${mode === 'PCT' ? 'active' : ''}`;
-      document.getElementById('mode-amt-btn').className = `mode-btn ${mode === 'AMT' ? 'active' : ''}`;
-      document.getElementById('offer-input-label').innerText = mode === 'PCT' ? 'Offer Percentage (%)' : 'Flat Offer Amount ($)';
-      document.getElementById('item-offer-input').value = mode === 'PCT' ? '40' : currentLockedTargetOffer.toFixed(2);
-      calculateTargetPrice();
-    }
-
-    function populateConditionDropdown(scaleType) {
-      const select = document.getElementById('item-condition');
-      select.innerHTML = '';
-      const options = CONDITION_SCALES[scaleType] || CONDITION_SCALES.GENERIC;
-      options.forEach(opt => {
-        select.innerHTML += `<option value="${opt}">${opt}</option>`;
-      });
-    }
-
-    function calculateTargetPrice() {
-      // Mock Base Benchmark Logic
-      if (currentTargetResale === 0) currentTargetResale = 250.00; // Example baseline fallback
-
-      let penalty = 0;
-      if (document.getElementById('defect-glass').checked) penalty += 0.25;
-      if (document.getElementById('defect-parts').checked) penalty += 0.20;
-      if (document.getElementById('defect-testing').checked) penalty += 0.30;
-
-      const adjustedResale = currentTargetResale * (1 - penalty);
-      currentLockedTargetOffer = adjustedResale * 0.40; // Default 40% target anchor
-
-      document.getElementById('target-anchor-price').innerText = `$${currentLockedTargetOffer.toFixed(2)}`;
-      document.getElementById('benchmark-range-text').innerText = `Base Resale: $${adjustedResale.toFixed(2)} (Penalties: -${penalty * 100}%)`;
-
-      if (!isPriceDirty) {
-        const inputVal = parseFloat(document.getElementById('item-offer-input').value) || 0;
-        let finalOffer = 0;
-        if (currentOfferMode === 'PCT') {
-          finalOffer = adjustedResale * (inputVal / 100);
-        } else {
-          finalOffer = inputVal;
-        }
-        document.getElementById('item-buy-price').value = finalOffer.toFixed(2);
+    function triggerDLScan() { document.getElementById('dl-file-input').click(); }
+    function handleDLPhotoUpload(e) {
+      if (e.target.files.length > 0) {
+        document.getElementById('dl-photo-status').classList.remove('hidden');
       }
     }
 
-    function markPriceDirty() { isPriceDirty = true; }
-    function onOfferInputChanged() { isPriceDirty = false; calculateTargetPrice(); }
+    function addCurrentItemToQuote() {
+      const title = document.getElementById('eval-title').value.trim();
+      const amt = parseFloat(document.getElementById('offer-amt').value) || 0;
+      const cond = document.getElementById('eval-condition').value;
 
-    function roundOffer(step) {
-      let currentVal = parseFloat(document.getElementById('item-buy-price').value) || 0;
-      currentVal = Math.ceil(currentVal / step) * step;
-      document.getElementById('item-buy-price').value = currentVal.toFixed(2);
-      markPriceDirty();
+      if (!title) return alert('Enter item title first.');
+
+      quoteSession.push({ title, cond, resale: staticBaseResale, offer: amt });
+      renderQuoteTable();
+      document.getElementById('eval-title').value = '';
     }
 
-    function addItemToQuote() {
-      const title = document.getElementById('item-name').value.trim();
-      const buyPrice = parseFloat(document.getElementById('item-buy-price').value) || 0;
-      const cond = document.getElementById('item-condition').value;
-
-      if (!title) return alert('Please enter an Item Name / Model Title.');
-
-      const newItem = {
-        id: Date.now(),
-        title: title,
-        condition: cond,
-        resale: currentTargetResale,
-        offer: buyPrice
-      };
-
-      quoteItems.push(newItem);
-      renderQuoteList();
-
-      // Clear Inspection Form for Next Item
-      document.getElementById('item-name').value = '';
-      document.getElementById('item-sn').value = '';
-      document.getElementById('item-notes').value = '';
-      isPriceDirty = false;
-      currentTargetResale = 0;
-      calculateTargetPrice();
-    }
-
-    function renderQuoteList() {
-      const tbody = document.getElementById('quote-list-body');
-      if (quoteItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--muted); padding: 20px;">No items added to current quote session.</td></tr>';
-        updateTotals();
+    function renderQuoteTable() {
+      const tbody = document.getElementById('quote-table-body');
+      if (quoteSession.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--muted); padding: 15px;">No items in quote session.</td></tr>';
         return;
       }
-
       tbody.innerHTML = '';
-      quoteItems.forEach((item, index) => {
-        const margin = item.resale > 0 ? (((item.resale - item.offer) / item.resale) * 100).toFixed(0) : 0;
+      let totResale = 0, totOffer = 0;
+      quoteSession.forEach((item, idx) => {
+        totResale += item.resale;
+        totOffer += item.offer;
+        const margin = (((item.resale - item.offer) / item.resale) * 100).toFixed(0);
         tbody.innerHTML += `
           <tr>
-            <td><div class="thumb-preview"></div></td>
             <td><strong>${item.title}</strong></td>
-            <td>${item.condition}</td>
-            <td style="color: var(--accent); font-weight:700;">$${item.offer.toFixed(2)}</td>
-            <td class="internal-metric" style="color: var(--success); font-weight:700;">${margin}%</td>
-            <td><button class="btn btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="removeItem(${index})">✕</button></td>
+            <td>${item.cond}</td>
+            <td style="color:var(--accent); font-weight:700;">$${item.offer.toFixed(2)}</td>
+            <td class="internal-metric" style="color:var(--success);">${margin}%</td>
+            <td><button class="btn btn-secondary" onclick="removeItem(${idx})">✕</button></td>
           </tr>
         `;
       });
-
-      updateTotals();
+      document.getElementById('total-qty').innerText = quoteSession.length;
+      document.getElementById('total-resale').innerText = `$${totResale.toFixed(2)}`;
+      document.getElementById('total-offer-amt').innerText = `$${totOffer.toFixed(2)}`;
     }
 
-    function removeItem(index) {
-      quoteItems.splice(index, 1);
-      renderQuoteList();
+    function removeItem(idx) {
+      quoteSession.splice(idx, 1);
+      renderQuoteTable();
     }
 
-    function updateTotals() {
-      const totalItems = quoteItems.length;
-      const totalResale = quoteItems.reduce((sum, i) => sum + i.resale, 0);
-      const totalOffer = quoteItems.reduce((sum, i) => sum + i.offer, 0);
-      const projMargin = totalResale > 0 ? (((totalResale - totalOffer) / totalResale) * 100).toFixed(0) : 0;
-
-      document.getElementById('stat-total-items').innerText = totalItems;
-      document.getElementById('stat-total-resale').innerText = `$${totalResale.toFixed(2)}`;
-      document.getElementById('stat-proj-margin').innerText = `${projMargin}%`;
-      document.getElementById('stat-total-offer').innerText = `$${totalOffer.toFixed(2)}`;
-    }
-
-    function completeTransaction(status) {
+    function commitSession(type) {
       const seller = document.getElementById('seller-name').value.trim();
-      if (!seller) return alert('Please enter Seller Full Name before completing session.');
-      if (quoteItems.length === 0) return alert('Cannot log an empty quote session.');
-
-      alert(`Session logged as [${status.toUpperCase()}] for seller: ${seller}. ${quoteItems.length} items recorded.`);
-      quoteItems = [];
-      document.getElementById('seller-name').value = '';
-      document.getElementById('seller-id').value = '';
-      renderQuoteList();
+      if (!seller) return alert('Enter seller name.');
+      if (quoteSession.length === 0) return alert('Add at least 1 item.');
+      alert(`Quote committed as [${type}] for ${seller}.`);
+      quoteSession = [];
+      renderQuoteTable();
     }
   </script>
 </body>
