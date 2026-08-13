@@ -57,7 +57,7 @@
 
     /* Navigation Bar */
     .nav-bar { background: var(--card); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; }
-    .nav-tab { padding: 12px 20px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; whitespace: nowrap; }
+    .nav-tab { padding: 12px 20px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
     .nav-tab.active { color: var(--text); border-bottom-color: var(--accent); }
     .nav-tab.owner-only { display: none; }
 
@@ -367,12 +367,18 @@
     let userRole = 'staff';
     let loadedCategories = [];
 
-// 1. HARDCODED API CONFIG (No setup screen needed)
-    const SB_URL = 'https://lhtaitctiamvmjwlgbsp.supabase.co'; // Replace with your actual Supabase URL
-    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxodGFpdGN0aWFtdm1qd2xnYnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NTczMjUsImV4cCI6MjEwMjAzMzMyNX0._I0Nv43Ufgn0jAss1-pNEMIohmI75bsSC6TjL-NNePs';                // Replace with your actual Supabase Anon Key
+    // 1. HARDCODED API CONFIG (No setup screen needed)
+    const SB_URL = 'https://lhtaitctiamvmjwlgbsp.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxodGFpdGN0aWFtdm1qd2xnYnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NTczMjUsImV4cCI6MjEwMjAzMzMyNX0._I0Nv43Ufgn0jAss1-pNEMIohmI75bsSC6TjL-NNePs';
 
     window.addEventListener('DOMContentLoaded', () => {
       initSupabase(SB_URL, SB_KEY);
+
+      // Attach live catalog lookup listener to Item Name field
+      const nameInput = document.getElementById('item-name');
+      if (nameInput) {
+        nameInput.addEventListener('input', debounce(lookupCatalogTitle, 400));
+      }
     });
 
     function saveConfig() {
@@ -467,7 +473,7 @@
       if (tabId === 'inventory-tab') loadInventory();
     }
 
-    // 4. CATEGORIES & AUTOMATIONS
+    // 4. CATEGORIES, BENCHMARKS & AUTOMATIONS
     async function loadCategories() {
       const { data } = await supabaseClient.from('item_categories').select('*').order('category_name');
       const select = document.getElementById('item-category');
@@ -478,6 +484,43 @@
           select.innerHTML += `<option value="${c.category_id}">${c.category_name}</option>`;
         });
       }
+    }
+
+    // LIVE BENCHMARK AUTOCOMPLETE LOOKUP
+    async function lookupCatalogTitle() {
+      const titleInput = document.getElementById('item-name').value.trim();
+      if (titleInput.length < 3) return;
+
+      const { data, error } = await supabaseClient.rpc('search_catalog_benchmarks', {
+        search_term: titleInput
+      });
+
+      if (data && data.length > 0) {
+        const match = data[0]; // Top matching record
+        
+        // Auto-fill pricing anchors if values exist
+        if (match.initial_price && match.initial_price > 0) {
+          document.getElementById('item-expected-resale').value = parseFloat(match.initial_price).toFixed(2);
+          document.getElementById('item-price').value = parseFloat(match.initial_price).toFixed(2);
+        }
+        
+        // Append benchmark historical range into Notes field for quick reference
+        if (match.min_price && match.max_price) {
+          const benchmarkInfo = `[Catalog Benchmark: Range $${match.min_price} - $${match.max_price} | Target: $${match.initial_price}]`;
+          const currentNotes = document.getElementById('item-notes').value.trim();
+          if (!currentNotes.includes('Catalog Benchmark')) {
+            document.getElementById('item-notes').value = currentNotes ? `${currentNotes}\n${benchmarkInfo}` : benchmarkInfo;
+          }
+        }
+      }
+    }
+
+    function debounce(func, delay) {
+      let timer;
+      return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => func.apply(this, args), delay);
+      };
     }
 
     function autoGenerateSKU() {
