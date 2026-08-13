@@ -92,6 +92,35 @@
     td { padding: 10px; border-bottom: 1px solid var(--border); }
     .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: var(--border); color: var(--text); }
     
+    /* AUTOCOMPLETE DROPDOWN STYLES */
+    .autocomplete-wrapper { position: relative; }
+    .autocomplete-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: var(--card);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      margin-top: 4px;
+    }
+    .autocomplete-item {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .autocomplete-item:hover {
+      background: var(--border);
+    }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -168,9 +197,11 @@
               <input type="text" id="item-sku" placeholder="Auto / Manual SKU" onchange="lookupSKU()" onblur="lookupSKU()">
             </div>
 
-            <div class="col-4">
+            <!-- TITLE FIELD WITH VISUAL AUTOCOMPLETE CONTAINER -->
+            <div class="col-4 autocomplete-wrapper">
               <label>Item Name / Model Title *</label>
-              <input type="text" id="item-name" placeholder="e.g. Leica M6 TTL 0.72 Black Chrome">
+              <input type="text" id="item-name" placeholder="Type model (e.g. Nikon N50, Leica M6)">
+              <div id="autocomplete-list" class="autocomplete-results hidden"></div>
             </div>
 
             <div class="col-2">
@@ -367,7 +398,7 @@
     let userRole = 'staff';
     let loadedCategories = [];
 
-    // 1. HARDCODED API CONFIG (No setup screen needed)
+    // 1. HARDCODED API CONFIG
     const SB_URL = 'https://lhtaitctiamvmjwlgbsp.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxodGFpdGN0aWFtdm1qd2xnYnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NTczMjUsImV4cCI6MjEwMjAzMzMyNX0._I0Nv43Ufgn0jAss1-pNEMIohmI75bsSC6TjL-NNePs';
 
@@ -377,8 +408,16 @@
       // Attach live catalog lookup listener to Item Name field
       const nameInput = document.getElementById('item-name');
       if (nameInput) {
-        nameInput.addEventListener('input', debounce(lookupCatalogTitle, 400));
+        nameInput.addEventListener('input', debounce(lookupCatalogTitle, 350));
       }
+
+      // Hide autocomplete results when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.autocomplete-wrapper')) {
+          const listContainer = document.getElementById('autocomplete-list');
+          if (listContainer) listContainer.classList.add('hidden');
+        }
+      });
     });
 
     function saveConfig() {
@@ -473,7 +512,7 @@
       if (tabId === 'inventory-tab') loadInventory();
     }
 
-    // 4. CATEGORIES, BENCHMARKS & AUTOMATIONS
+    // 4. CATEGORIES, VISUAL BENCHMARK AUTOCOMPLETE & AUTOMATIONS
     async function loadCategories() {
       const { data } = await supabaseClient.from('item_categories').select('*').order('category_name');
       const select = document.getElementById('item-category');
@@ -486,32 +525,74 @@
       }
     }
 
-    // LIVE BENCHMARK AUTOCOMPLETE LOOKUP
+    // LIVE VISUAL BENCHMARK AUTOCOMPLETE DROPDOWN
     async function lookupCatalogTitle() {
       const titleInput = document.getElementById('item-name').value.trim();
-      if (titleInput.length < 3) return;
+      const listContainer = document.getElementById('autocomplete-list');
+
+      if (titleInput.length < 3) {
+        listContainer.innerHTML = '';
+        listContainer.classList.add('hidden');
+        return;
+      }
 
       const { data, error } = await supabaseClient.rpc('search_catalog_benchmarks', {
         search_term: titleInput
       });
 
       if (data && data.length > 0) {
-        const match = data[0]; // Top matching record
+        listContainer.innerHTML = '';
         
-        // Auto-fill pricing anchors if values exist
-        if (match.initial_price && match.initial_price > 0) {
-          document.getElementById('item-expected-resale').value = parseFloat(match.initial_price).toFixed(2);
-          document.getElementById('item-price').value = parseFloat(match.initial_price).toFixed(2);
-        }
-        
-        // Append benchmark historical range into Notes field for quick reference
-        if (match.min_price && match.max_price) {
-          const benchmarkInfo = `[Catalog Benchmark: Range $${match.min_price} - $${match.max_price} | Target: $${match.initial_price}]`;
-          const currentNotes = document.getElementById('item-notes').value.trim();
-          if (!currentNotes.includes('Catalog Benchmark')) {
-            document.getElementById('item-notes').value = currentNotes ? `${currentNotes}\n${benchmarkInfo}` : benchmarkInfo;
-          }
-        }
+        data.forEach(match => {
+          const itemEl = document.createElement('div');
+          itemEl.className = 'autocomplete-item';
+          
+          const titleSpan = document.createElement('span');
+          titleSpan.style.fontWeight = '600';
+          titleSpan.innerText = match.listing_title;
+
+          const priceSpan = document.createElement('span');
+          priceSpan.style.color = 'var(--accent)';
+          priceSpan.style.fontWeight = '700';
+          priceSpan.style.marginLeft = '10px';
+          priceSpan.innerText = match.initial_price ? `$${match.initial_price}` : '';
+
+          itemEl.appendChild(titleSpan);
+          itemEl.appendChild(priceSpan);
+
+          // WHEN STAFF CLICKS A MATCHING TITLE
+          itemEl.addEventListener('click', () => {
+            document.getElementById('item-name').value = match.listing_title;
+            
+            if (match.initial_price && match.initial_price > 0) {
+              document.getElementById('item-expected-resale').value = parseFloat(match.initial_price).toFixed(2);
+              document.getElementById('item-price').value = parseFloat(match.initial_price).toFixed(2);
+            }
+
+            if (match.ebay_category_id) {
+              document.getElementById('item-category').value = match.ebay_category_id;
+              autoGenerateSKU();
+            }
+
+            if (match.min_price && match.max_price) {
+              const benchmarkInfo = `[Catalog Benchmark: Range $${match.min_price} - $${match.max_price} | Target: $${match.initial_price}]`;
+              const currentNotes = document.getElementById('item-notes').value.trim();
+              if (!currentNotes.includes('Catalog Benchmark')) {
+                document.getElementById('item-notes').value = currentNotes ? `${currentNotes}\n${benchmarkInfo}` : benchmarkInfo;
+              }
+            }
+
+            listContainer.innerHTML = '';
+            listContainer.classList.add('hidden');
+          });
+
+          listContainer.appendChild(itemEl);
+        });
+
+        listContainer.classList.remove('hidden');
+      } else {
+        listContainer.innerHTML = '';
+        listContainer.classList.add('hidden');
       }
     }
 
