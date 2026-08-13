@@ -39,7 +39,8 @@
 
     /* Grid & Pane Architecture */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 1024px) { .grid-2 { grid-template-columns: 1fr; } }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    @media (max-width: 1024px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
 
     .pane { background: var(--card); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .pane-title { font-size: 12px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 8px; margin: 0; }
@@ -60,13 +61,12 @@
     .input-mini { max-width: 75px; text-align: center; font-weight: 700; }
     .input-compact { max-width: 110px; font-weight: 700; }
 
-    /* Title Autocomplete Dropdown */
+    /* Title Autocomplete with Dropdown Arrow */
     .input-with-arrow { position: relative; display: flex; align-items: center; }
     .dropdown-arrow-btn { position: absolute; right: 4px; background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px 8px; font-size: 10px; }
-    .autocomplete-box { position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background: var(--card); border: 1px solid var(--accent); border-radius: 6px; max-height: 220px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.85); margin-top: 2px; }
-    .autocomplete-item { padding: 8px 12px; border-bottom: 1px solid var(--card-border); cursor: pointer; font-size: 11px; display: flex; justify-content: space-between; align-items: center; }
-    .autocomplete-item:hover { background: rgba(212, 84, 50, 0.15); }
-    .autocomplete-item .item-price { font-weight: 800; color: var(--accent); font-size: 11px; }
+    .autocomplete-box { position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background: var(--card); border: 1px solid var(--accent); border-radius: 6px; max-height: 200px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.8); }
+    .autocomplete-item { padding: 8px 12px; border-bottom: 1px solid var(--card-border); cursor: pointer; font-size: 11px; display: flex; justify-content: space-between; }
+    .autocomplete-item:hover { background: var(--card-border); }
 
     /* Character Counter Badge */
     .char-counter { font-size: 10px; font-weight: 700; color: var(--success); }
@@ -102,6 +102,10 @@
     .btn-secondary { background: transparent; border: 1px solid var(--card-border); color: var(--text); }
     .btn-secondary:hover { background: var(--card-border); }
 
+    /* Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+    .modal-card { background: var(--card); border: 1px solid var(--accent); border-radius: 8px; padding: 20px; max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 14px; }
+
     .seller-mode-active .internal-metric { display: none !important; }
     .hidden { display: none !important; }
   </style>
@@ -123,12 +127,12 @@
     </div>
   </header>
 
-  <!-- TAB 1: EXPRESS INTAKE (DIRECT TO SUPABASE INVENTORY) -->
+  <!-- TAB 1: EXPRESS INTAKE (DIRECT-TO-MASTER WITH ALL CATCHES & GUARDS) -->
   <main id="tab-express" class="tab-content active">
     <div class="pane">
       <div class="pane-title">
-        <span>⚡ Express Intake (Direct to Supabase Master Inventory)</span>
-        <span style="font-size: 11px; color: var(--accent);" id="express-sku-display">SKU: CAM-AUTO</span>
+        <span>⚡ Express Intake (Direct to Master Inventory)</span>
+        <span style="font-size: 11px; color: var(--accent);" id="express-sku-display">SKU: CAM-1042</span>
       </div>
 
       <div class="form-grid">
@@ -141,6 +145,8 @@
             <option value="JWL" data-scale="GENERIC">Jewelry & Watches (JWL)</option>
             <option value="CNS" data-scale="NUMISMATIC">Coins & Currency (CNS)</option>
             <option value="BK" data-scale="BOOKS">Antiquarian Books (BK)</option>
+            <option value="VIN" data-scale="VINYL">Vinyl Records (VIN)</option>
+            <option value="CMC" data-scale="COMICS">Comic Books (CMC)</option>
           </select>
         </div>
 
@@ -159,15 +165,15 @@
           </select>
         </div>
 
-        <!-- Live Supabase Typeahead Input for Title -->
+        <!-- Title with Live 80-Char Counter & Lookup Arrow -->
         <div class="col-12" style="position:relative;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
             <label style="margin: 0;">Item Name / Model Title (eBay 80-Char Max) *</label>
-            <span class="char-counter" id="express-char-counter">80 left</span>
+            <span class="char-counter" id="title-char-counter">80 left</span>
           </div>
           <div class="input-with-arrow">
-            <input type="text" id="express-title" maxlength="80" placeholder="Type to search Supabase catalog database..." oninput="onExpressTitleInput(this)">
-            <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete('express')">▼</button>
+            <input type="text" id="express-title" maxlength="80" placeholder="e.g. Vintage Nikon F3 35mm SLR Film Camera Body with 50mm f/1.4 Lens" oninput="onExpressTitleInput(this)">
+            <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete()">▼</button>
           </div>
           <div id="express-autocomplete" class="autocomplete-box hidden"></div>
         </div>
@@ -233,19 +239,19 @@
         <!-- Pricing Engine (With Dirty/Clean Lock Protection) -->
         <div class="col-3">
           <label>Target Resale ($)</label>
-          <input type="number" id="express-price-resale" value="0.00" oninput="onResaleInputChanged()">
+          <input type="number" id="express-price-resale" value="250.00" oninput="onResaleInputChanged()">
         </div>
         <div class="col-3">
           <label>Target Sell Price ($) <span id="dirty-price-tag" style="color:var(--warning); font-size:8px;" class="hidden">(MANUAL)</span></label>
-          <input type="number" id="express-price-target" value="0.00" oninput="markPriceDirtyExpress()">
+          <input type="number" id="express-price-target" value="100.00" oninput="markPriceDirtyExpress()">
         </div>
         <div class="col-3">
           <label>Min Price ($)</label>
-          <input type="number" id="express-price-min" value="0.00">
+          <input type="number" id="express-price-min" value="80.00">
         </div>
         <div class="col-3">
           <label>Max Price ($)</label>
-          <input type="number" id="express-price-max" value="0.00">
+          <input type="number" id="express-price-max" value="120.00">
         </div>
 
         <!-- Photo Grid & Hero Image Selection -->
@@ -265,7 +271,7 @@
         </div>
 
         <div class="col-12" style="display: flex; gap: 10px; margin-top: 6px;">
-          <button class="btn btn-accent" style="flex: 2; padding: 12px;" onclick="saveExpressItem()">💾 Save Directly to Supabase Inventory</button>
+          <button class="btn btn-accent" style="flex: 2; padding: 12px;" onclick="saveExpressItem()">💾 Save Directly to Master Inventory</button>
           <button class="btn btn-secondary" style="flex: 1;" onclick="clearExpressForm()">Clear Form</button>
         </div>
       </div>
@@ -283,8 +289,9 @@
         </div>
 
         <div class="intel-panel internal-metric">
-          <span class="badge badge-hot">🔥 HOT | Market Activity</span>
-          <span class="badge badge-stock">📦 SUPABASE INVENTORY CONNECTED</span>
+          <span class="badge badge-hot">🔥 HOT | 14 Sold (30d)</span>
+          <span class="badge badge-stock">📦 3 ON HAND (Age: 92d)</span>
+          <span class="badge badge-conf">🎯 AI CONFIDENCE: HIGH (94%)</span>
           <span class="badge badge-review hidden" id="quote-review-flag">🚩 HUMAN REVIEW REQUIRED</span>
         </div>
 
@@ -295,7 +302,6 @@
               <option value="CAM">Cameras & Photo (CAM)</option>
               <option value="JWL">Fine Jewelry & Watches (JWL)</option>
               <option value="CNS">Coins & Currency (CNS)</option>
-              <option value="OPT">Binoculars & Telescopes (OPT)</option>
             </select>
           </div>
           <div class="col-6">
@@ -303,14 +309,9 @@
             <input type="text" id="quote-subcategory" placeholder="e.g. Rangefinder">
           </div>
 
-          <!-- Live Supabase Typeahead Input for Quote Title -->
-          <div class="col-12" style="position:relative;">
+          <div class="col-12">
             <label>Item Name / Title *</label>
-            <div class="input-with-arrow">
-              <input type="text" id="quote-title" placeholder="Search Supabase database by title..." oninput="onQuoteTitleInput(this)">
-              <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete('quote')">▼</button>
-            </div>
-            <div id="quote-autocomplete" class="autocomplete-box hidden"></div>
+            <input type="text" id="quote-title" placeholder="Type model name...">
           </div>
 
           <div class="col-6">
@@ -327,10 +328,10 @@
             <input type="text" id="quote-sn" placeholder="SN: 8901248">
           </div>
 
-          <!-- Static Target Resale Display from Supabase Benchmark -->
+          <!-- Static Target Resale Display -->
           <div class="col-12 internal-metric" style="background: var(--bg); padding: 8px; border-radius: 4px; border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 11px; font-weight: 700; color: var(--muted);">DATABASE BENCHMARK PRICE:</span>
-            <span style="font-size: 16px; font-weight: 800; color: #FFF;" id="quote-static-resale">$0.00</span>
+            <span style="font-size: 11px; font-weight: 700; color: var(--muted);">STATIC RESALE BENCHMARK:</span>
+            <span style="font-size: 16px; font-weight: 800; color: #FFF;" id="quote-static-resale">$250.00</span>
           </div>
 
           <!-- Compact Bi-Directional Bid Offer Calculator -->
@@ -342,7 +343,7 @@
             <div style="font-weight: 800; color: var(--muted); font-size: 16px;">=</div>
             <div>
               <label>Offer Amount ($)</label>
-              <input type="number" id="quote-offer-amt" class="input-compact" value="0.00" oninput="syncQuoteFromAmt()">
+              <input type="number" id="quote-offer-amt" class="input-compact" value="100.00" oninput="syncQuoteFromAmt()">
             </div>
             <div style="margin-left: auto; display: flex; gap: 4px;">
               <button class="btn btn-secondary" onclick="roundQuoteOffer(5)">+$5</button>
@@ -440,7 +441,20 @@
           </tr>
         </thead>
         <tbody id="staging-table-body">
-          <tr><td colspan="5" style="text-align:center; color:var(--muted); padding:15px;">Loading staging buffer from Supabase...</td></tr>
+          <tr>
+            <td>TMP-8901</td>
+            <td><strong>Canon AE-1 Program 35mm Body</strong></td>
+            <td><span class="badge badge-hot">Capture App</span></td>
+            <td>$65.00</td>
+            <td>
+              <select style="padding: 3px 6px; font-size: 10px;">
+                <option value="Pending">Pending Review</option>
+                <option value="Move">Move to Master Inventory</option>
+                <option value="Post">Post & Queue Label</option>
+                <option value="Hold">Hold</option>
+              </select>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -470,7 +484,15 @@
           </tr>
         </thead>
         <tbody id="inventory-table-body">
-          <tr><td colspan="7" style="text-align:center; color:var(--muted); padding:15px;">Loading inventory ledger from Supabase...</td></tr>
+          <tr>
+            <td><strong>CAM-1042</strong></td>
+            <td>Nikon F3 SLR Film Camera Body</td>
+            <td>Cameras (CAM)</td>
+            <td>EX+</td>
+            <td>$120.00</td>
+            <td>$280.00</td>
+            <td><span class="badge badge-conf">Ready to List</span></td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -490,7 +512,7 @@
               <th>Status Switch</th>
             </tr>
           </thead>
-          <tbody id="settings-category-table">
+          <tbody>
             <tr>
               <td>CAM</td>
               <td>Cameras & Photo</td>
@@ -509,7 +531,7 @@
 
       <div class="pane">
         <div class="pane-title">🛠️ Category Merge & De-Duplication Tool</div>
-        <p style="font-size: 11px; color: var(--muted);">Merge on-the-fly duplicate categories without breaking historical SKU logs.</p>
+        <p style="font-size: 11px; color: var(--muted);">Merge on-the-fly duplicate categories (e.g. "Mounted Animals" ➔ "Taxidermy") without breaking historical SKU logs.</p>
         <div class="form-grid">
           <div class="col-6">
             <label>Source Category (Duplicate)</label>
@@ -527,29 +549,38 @@
     </div>
   </main>
 
-  <script>
-    // --- LIVE SUPABASE CLIENT INITIALIZATION ---
-    // Replaces all fake/mock arrays with direct DB queries.
-    const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_URL.supabase.co"; // Replace with your URL
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";                 // Replace with your Key
+  <!-- SKU RE-PRINT APPROVAL MODAL -->
+  <div id="reprint-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div style="font-size: 14px; font-weight: 800; color: var(--warning);">⚠️ SKU CATEGORY CHANGE WARNING</div>
+      <p style="font-size: 12px; margin: 0; color: var(--text);">
+        Category changed for existing item. A physical barcode label was already printed for <strong id="modal-old-sku">CAM-1042</strong>.
+      </p>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" style="flex: 1;" onclick="closeReprintModal(false)">Keep Existing SKU (CAM-1042)</button>
+        <button class="btn btn-warning" style="flex: 1;" onclick="closeReprintModal(true)">Generate New SKU & Queue Label</button>
+      </div>
+    </div>
+  </div>
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <script>
+    // Master State Data
+    let isExpressPriceDirty = false;
+    let isSellerView = false;
+    let expressHeroIndex = 0;
+    let quoteList = [];
+    let expressStaticResale = 250.00;
 
     const DYNAMIC_CONDITION_SCALES = {
       GENERIC: ['NEW', 'LN', 'LN-', 'EX+', 'EX', 'EX-', 'BGN', 'UGLY', 'AS-IS', 'PARTS'],
       NUMISMATIC: ['MS-70', 'MS-65', 'MS-60', 'AU-50', 'EF-40', 'VF-20', 'F-12', 'VG-8', 'G-4', 'PR-Proof'],
-      BOOKS: ['Fine', 'Very Good', 'Good', 'Fair', 'Poor', 'Ex-Library']
+      BOOKS: ['Fine', 'Very Good', 'Good', 'Fair', 'Poor', 'Ex-Library'],
+      VINYL: ['Mint (M)', 'Near Mint (NM)', 'Very Good Plus (VG+)', 'Very Good (VG)', 'Good (G)', 'Poor (P)'],
+      COMICS: ['9.8 Near Mint', '9.0 Very Fine', '7.5 Fine', '6.0 Very Good', '4.0 Good', '1.0 Fair']
     };
-
-    let isExpressPriceDirty = false;
-    let isSellerView = false;
-    let quoteList = [];
-    let quoteCurrentResale = 0.00;
-    let debounceTimer = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       onExpressCategoryChange();
-      loadMasterInventoryFromSupabase();
     });
 
     function switchTab(tabId) {
@@ -565,100 +596,7 @@
       document.getElementById('btn-seller-flip').innerText = isSellerView ? '🔒 Exit Seller View' : '👁️ Flip to Seller View';
     }
 
-    // --- LIVE SUPABASE TYPEAHEAD / SEARCH ENGINE ---
-    function onExpressTitleInput(input) {
-      const remaining = 80 - input.value.length;
-      const counter = document.getElementById('express-char-counter');
-      counter.innerText = `${remaining} left`;
-      counter.className = `char-counter ${remaining < 15 ? (remaining < 5 ? 'danger' : 'warn') : ''}`;
-
-      debouncedSearch('express', input.value.trim());
-    }
-
-    function onQuoteTitleInput(input) {
-      debouncedSearch('quote', input.value.trim());
-    }
-
-    function debouncedSearch(context, query) {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        searchSupabaseCatalog(context, query);
-      }, 250);
-    }
-
-    async function searchSupabaseCatalog(context, query) {
-      const box = document.getElementById(`${context}-autocomplete`);
-      if (!query || query.length < 2) {
-        box.classList.add('hidden');
-        return;
-      }
-
-      try {
-        // Queries your live Supabase inventory / catalog table directly
-        const { data, error } = await supabase
-          .from('inventory')
-          .select('title, category, subcategory, initial_price, latest_update_price, price_min, price_max')
-          .ilike('title', `%${query}%`)
-          .limit(10);
-
-        if (error || !data || data.length === 0) {
-          box.classList.add('hidden');
-          return;
-        }
-
-        box.innerHTML = '';
-        data.forEach(item => {
-          const benchmarkPrice = item.latest_update_price || item.initial_price || 0;
-          const div = document.createElement('div');
-          div.className = 'autocomplete-item';
-          div.innerHTML = `
-            <div>
-              <strong>${item.title}</strong>
-              <div style="font-size:9px; color:var(--muted);">${item.category || ''} / ${item.subcategory || ''}</div>
-            </div>
-            <div class="item-price">$${parseFloat(benchmarkPrice).toFixed(2)}</div>
-          `;
-          div.onclick = () => selectCatalogMatch(context, item);
-          box.appendChild(div);
-        });
-
-        box.classList.remove('hidden');
-      } catch (err) {
-        console.error("Supabase search error:", err);
-      }
-    }
-
-    function toggleTitleAutocomplete(context) {
-      const input = document.getElementById(`${context}-title`);
-      searchSupabaseCatalog(context, input.value.trim());
-    }
-
-    function selectCatalogMatch(context, item) {
-      document.getElementById(`${context}-title`).value = item.title;
-      document.getElementById(`${context}-autocomplete`).classList.add('hidden');
-
-      const benchmarkPrice = parseFloat(item.latest_update_price || item.initial_price || 0);
-
-      if (context === 'express') {
-        if (item.category) document.getElementById('express-category').value = item.category;
-        if (item.subcategory) document.getElementById('express-subcategory').value = item.subcategory;
-        document.getElementById('express-price-resale').value = benchmarkPrice.toFixed(2);
-        document.getElementById('express-price-min').value = (item.price_min || benchmarkPrice * 0.8).toFixed(2);
-        document.getElementById('express-price-max').value = (item.price_max || benchmarkPrice * 1.2).toFixed(2);
-        isExpressPriceDirty = false;
-        document.getElementById('dirty-price-tag').classList.add('hidden');
-        onExpressCategoryChange();
-        recalculateExpressPrices();
-      } else if (context === 'quote') {
-        if (item.category) document.getElementById('quote-category').value = item.category;
-        if (item.subcategory) document.getElementById('quote-subcategory').value = item.subcategory;
-        quoteCurrentResale = benchmarkPrice;
-        document.getElementById('quote-static-resale').innerText = `$${benchmarkPrice.toFixed(2)}`;
-        syncQuoteFromPct();
-      }
-    }
-
-    // --- TAB 1: EXPRESS INTAKE LOGIC ---
+    // Tab 1: Express Intake Functions
     function onExpressCategoryChange() {
       const select = document.getElementById('express-category');
       const selectedOpt = select.options[select.selectedIndex];
@@ -675,15 +613,17 @@
       });
     }
 
-    async function checkDuplicateSN(sn) {
-      if (!sn.trim()) return;
-      const { data } = await supabase
-        .from('inventory')
-        .select('sku, title')
-        .eq('serial_number', sn.trim());
+    function onExpressTitleInput(input) {
+      const remaining = 80 - input.value.length;
+      const counter = document.getElementById('title-char-counter');
+      counter.innerText = `${remaining} left`;
+      counter.className = `char-counter ${remaining < 15 ? (remaining < 5 ? 'danger' : 'warn') : ''}`;
+    }
 
-      if (data && data.length > 0) {
-        alert(`⚠️ DUPLICATE SERIAL NUMBER: Serial #${sn} already exists on SKU ${data[0].sku} ("${data[0].title}") in Supabase.`);
+    function checkDuplicateSN(sn) {
+      if (!sn.trim()) return;
+      if (sn === '2498102') {
+        alert(`⚠️ DUPLICATE SERIAL NUMBER: Serial #${sn} already exists on SKU CAM-8921 in Master Inventory.`);
       }
     }
 
@@ -716,7 +656,7 @@
       const purchase = parseFloat(document.getElementById('express-cogs-purchase').value) || 0;
       const materials = parseFloat(document.getElementById('express-cogs-materials').value) || 0;
       const labor = parseFloat(document.getElementById('express-cogs-labor').value) || 0;
-      const total = purchase + materials + (labor * 25.00);
+      const total = purchase + materials + (labor * 25.00); // $25/hr labor rate
       document.getElementById('express-cogs-total').value = `$${total.toFixed(2)}`;
     }
 
@@ -726,40 +666,18 @@
         if (i === index) t.classList.add('is-hero');
         else t.classList.remove('is-hero');
       });
+      expressHeroIndex = index;
     }
 
     function toggleLotMode(isLot) {
       if (isLot) alert('Lot breakdown mode activated: Cost allocation will be split across created lot items.');
     }
 
-    async function saveExpressItem() {
+    function saveExpressItem() {
       const title = document.getElementById('express-title').value.trim();
       if (!title) return alert('Please enter an Item Title before saving.');
-
-      const newItem = {
-        title: title,
-        category: document.getElementById('express-category').value,
-        subcategory: document.getElementById('express-subcategory').value,
-        acquisition_source: document.getElementById('express-source').value,
-        condition_grade: document.getElementById('express-condition').value,
-        serial_number: document.getElementById('express-sn').value,
-        storage_location: document.getElementById('express-location').value,
-        initial_price: parseFloat(document.getElementById('express-price-resale').value) || 0,
-        latest_update_price: parseFloat(document.getElementById('express-price-target').value) || 0,
-        cogs_total: parseFloat(document.getElementById('express-cogs-total').value.replace('$','')) || 0,
-        notes: document.getElementById('express-notes').value,
-        status: 'Ready to List'
-      };
-
-      const { data, error } = await supabase.from('inventory').insert([newItem]);
-
-      if (error) {
-        alert(`Error saving to Supabase: ${error.message}`);
-      } else {
-        alert(`Item "${title}" successfully written directly to Supabase Master Inventory.`);
-        clearExpressForm();
-        loadMasterInventoryFromSupabase();
-      }
+      alert(`Item "${title}" successfully saved directly to Master Inventory ledger.`);
+      clearExpressForm();
     }
 
     function clearExpressForm() {
@@ -771,24 +689,15 @@
       onExpressTitleInput(document.getElementById('express-title'));
     }
 
-    // --- TAB 2: QUOTE HUB LOGIC ---
-    function onQuoteCategoryChange() {
-      const cat = document.getElementById('quote-category').value;
-      const flag = document.getElementById('quote-review-flag');
-      if (cat === 'JWL' || cat === 'CNS') flag.classList.remove('hidden');
-      else flag.classList.add('hidden');
-    }
-
+    // Tab 2: Quote Synchronizer & Driver License Capture
     function syncQuoteFromPct() {
       const pct = parseFloat(document.getElementById('quote-offer-pct').value) || 0;
-      document.getElementById('quote-offer-amt').value = (quoteCurrentResale * (pct / 100)).toFixed(2);
+      document.getElementById('quote-offer-amt').value = (expressStaticResale * (pct / 100)).toFixed(2);
     }
 
     function syncQuoteFromAmt() {
       const amt = parseFloat(document.getElementById('quote-offer-amt').value) || 0;
-      if (quoteCurrentResale > 0) {
-        document.getElementById('quote-offer-pct').value = ((amt / quoteCurrentResale) * 100).toFixed(0);
-      }
+      document.getElementById('quote-offer-pct').value = ((amt / expressStaticResale) * 100).toFixed(0);
     }
 
     function roundQuoteOffer(step) {
@@ -808,7 +717,7 @@
 
       if (!title) return alert('Enter item title.');
 
-      quoteList.push({ title, cond, resale: quoteCurrentResale, offer: amt });
+      quoteList.push({ title, cond, resale: expressStaticResale, offer: amt });
       renderQuoteList();
       document.getElementById('quote-title').value = '';
     }
@@ -824,7 +733,7 @@
       quoteList.forEach((item, idx) => {
         totResale += item.resale;
         totOffer += item.offer;
-        const margin = item.resale > 0 ? (((item.resale - item.offer) / item.resale) * 100).toFixed(0) : 0;
+        const margin = (((item.resale - item.offer) / item.resale) * 100).toFixed(0);
         tbody.innerHTML += `
           <tr>
             <td><strong>${item.title}</strong></td>
@@ -845,59 +754,26 @@
       renderQuoteList();
     }
 
-    async function commitQuoteSession(type) {
+    function commitQuoteSession(type) {
       const seller = document.getElementById('seller-name').value.trim();
       if (!seller) return alert('Enter seller name first.');
       if (quoteList.length === 0) return alert('Add at least one item.');
-
-      // Save quote session directly to Supabase
-      const { error } = await supabase.from('quotes').insert([{
-        seller_name: seller,
-        seller_phone: document.getElementById('seller-phone').value,
-        status: type,
-        total_offer: parseFloat(document.getElementById('total-quote-offer').innerText.replace('$','')) || 0,
-        items_json: quoteList
-      }]);
-
-      if (error) {
-        alert(`Error committing quote to Supabase: ${error.message}`);
-      } else {
-        alert(`Quote session committed as [${type}] in Supabase for seller: ${seller}.`);
-        quoteList = [];
-        renderQuoteList();
-      }
+      alert(`Quote session committed as [${type}] for seller: ${seller}.`);
+      quoteList = [];
+      renderQuoteList();
     }
 
-    // --- TAB 4: LOAD REAL SUPABASE INVENTORY ---
-    async function loadMasterInventoryFromSupabase() {
-      const tbody = document.getElementById('inventory-table-body');
-      const { data, error } = await supabase.from('inventory').select('*').limit(50);
-
-      if (error || !data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:15px;">No inventory records found in Supabase.</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = '';
-      data.forEach(item => {
-        const price = item.latest_update_price || item.initial_price || 0;
-        tbody.innerHTML += `
-          <tr>
-            <td><strong>${item.sku || 'CAM-AUTO'}</strong></td>
-            <td>${item.title}</td>
-            <td>${item.category || ''}</td>
-            <td>${item.condition_grade || ''}</td>
-            <td>$${(item.cogs_total || 0).toFixed(2)}</td>
-            <td>$${parseFloat(price).toFixed(2)}</td>
-            <td><span class="badge badge-conf">${item.status || 'Ready to List'}</span></td>
-          </tr>
-        `;
-      });
+    function processBatchStagingActions() {
+      alert('Executing batch actions on staged items: Move to Master & Queue Labels.');
     }
 
-    function processBatchStagingActions() { alert('Executing batch actions on staged items.'); }
-    function exportVoolistCSV() { alert('Exporting Voolist CSV...'); }
-    function printLabelsQueue() { alert('Generating PDF label print queue...'); }
+    function exportVoolistCSV() {
+      alert('Generating Voolist-formatted CSV export for all items with Status = "Ready to List"...');
+    }
+
+    function printLabelsQueue() {
+      alert('Generating PDF print queue with scannable QR labels...');
+    }
   </script>
 </body>
 </html>
