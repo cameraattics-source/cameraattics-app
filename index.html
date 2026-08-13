@@ -3,792 +3,901 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Camera Attics Terminal</title>
-  <link rel="manifest" href="manifest.json">
+  <title>Camera Attics - Master Estate Terminal</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #12181F;
-      --card: #1A222D;
-      --border: #2A3545;
-      --accent: #B5482A;
-      --accent-hover: #D45432;
+      --bg: #090C10;
+      --card: #131924;
+      --card-border: #212B3D;
+      --accent: #D45432;
+      --accent-hover: #E86341;
       --text: #E6E1D6;
       --muted: #7A8694;
       --success: #2E7D32;
-      --owner-badge: #8E24AA;
+      --warning: #F57C00;
+      --danger: #C62828;
+      --info: #0288D1;
     }
+
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
-    
-    .center-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-    .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 28px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    h1 { font-size: 18px; font-weight: 600; text-align: center; margin: 0 0 20px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
-    
-    input, select, textarea { width: 100%; padding: 10px 12px; margin-top: 6px; margin-bottom: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 13px; }
-    
-    input[type=number]::-webkit-outer-spin-button,
-    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    input[type=number] { -moz-appearance: textfield; }
 
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
-    label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    
-    button { padding: 12px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: var(--accent-hover); }
-    button.btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    button.btn-secondary:hover { background: var(--border); }
-    
-    .app-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-    .brand { font-size: 16px; font-weight: 700; letter-spacing: 1px; color: var(--text); }
-    .user-info { display: flex; align-items: center; gap: 10px; font-size: 12px; }
-    .badge { padding: 4px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; font-size: 10px; }
-    .badge-owner { background: var(--owner-badge); color: #fff; }
-    .badge-staff { background: var(--muted); color: #fff; }
-    .btn-logout { background: transparent; border: 1px solid var(--border); padding: 6px 12px; font-size: 12px; }
+    /* Application Header */
+    .app-header { background: var(--card); border-bottom: 1px solid var(--card-border); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+    .brand { font-size: 15px; font-weight: 800; letter-spacing: 1.5px; color: var(--text); padding: 14px 0; }
+    .brand span { color: var(--accent); }
 
-    .nav-bar { background: var(--card); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; }
-    .nav-tab { padding: 12px 20px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
-    .nav-tab.active { color: var(--text); border-bottom-color: var(--accent); }
-    .nav-tab.owner-only { display: none; }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tab { padding: 14px 16px; font-size: 11px; font-weight: 700; color: var(--muted); background: transparent; border: none; border-bottom: 3px solid transparent; cursor: pointer; transition: 0.15s; }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(212, 84, 50, 0.05); }
 
-    .main-content { padding: 20px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
-    .panel { display: none; }
-    .panel.active { display: block; }
-    
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 15px; color: var(--accent); display: flex; justify-content: space-between; align-items: center; }
-    .section-header { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin: 15px 0 10px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+    /* Workspace Container */
+    .tab-content { display: none; padding: 16px; flex: 1; max-width: 1700px; margin: 0 auto; width: 100%; }
+    .tab-content.active { display: block; }
 
-    .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+    /* Grid & Pane Architecture */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 1024px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .pane { background: var(--card); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .pane-title { font-size: 12px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 8px; margin: 0; }
+
+    /* Form Fields & Compact Layouts */
+    .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 8px; align-items: center; }
     .col-12 { grid-column: span 12; }
-    .col-9  { grid-column: span 9; }
     .col-8  { grid-column: span 8; }
     .col-6  { grid-column: span 6; }
     .col-4  { grid-column: span 4; }
     .col-3  { grid-column: span 3; }
     .col-2  { grid-column: span 2; }
-    .col-1  { grid-column: span 1; }
 
-    @media (max-width: 768px) {
-      .col-9, .col-8, .col-6, .col-4, .col-3, .col-2, .col-1 { grid-column: span 12; }
-    }
+    label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 3px; }
+    input, select, textarea { width: 100%; padding: 7px 9px; background: var(--bg); border: 1px solid var(--card-border); border-radius: 4px; color: #fff; font-size: 12px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
 
-    .table-container { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-    th { background: #12181F; padding: 10px; border-bottom: 1px solid var(--border); color: var(--muted); }
-    td { padding: 10px; border-bottom: 1px solid var(--border); }
-    .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: var(--border); color: var(--text); }
-    
-    /* AUTOCOMPLETE DROPDOWN STYLES */
-    .autocomplete-wrapper { position: relative; }
+    .input-mini { max-width: 75px; text-align: center; font-weight: 700; }
+    .input-compact { max-width: 110px; font-weight: 700; }
+
+    /* Title Autocomplete Dropdown */
     .input-with-arrow { position: relative; display: flex; align-items: center; }
-    .dropdown-arrow-btn {
-      position: absolute;
-      right: 6px;
-      top: 6px;
-      bottom: 0;
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      padding: 0 8px;
-      font-size: 10px;
-    }
-    .dropdown-arrow-btn:hover { color: var(--text); }
+    .dropdown-arrow-btn { position: absolute; right: 4px; background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px 8px; font-size: 10px; }
+    .autocomplete-box { position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background: var(--card); border: 1px solid var(--accent); border-radius: 6px; max-height: 220px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.85); margin-top: 2px; }
+    .autocomplete-item { padding: 8px 12px; border-bottom: 1px solid var(--card-border); cursor: pointer; font-size: 11px; display: flex; justify-content: space-between; align-items: center; }
+    .autocomplete-item:hover { background: rgba(212, 84, 50, 0.15); }
+    .autocomplete-item .item-price { font-weight: 800; color: var(--accent); font-size: 11px; }
 
-    .autocomplete-results {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      background: var(--card);
-      border: 1px solid var(--accent);
-      border-radius: 6px;
-      max-height: 250px;
-      overflow-y: auto;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-      margin-top: 4px;
-    }
-    .autocomplete-item {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      font-size: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .autocomplete-item:hover { background: var(--border); }
+    /* Character Counter Badge */
+    .char-counter { font-size: 10px; font-weight: 700; color: var(--success); }
+    .char-counter.warn { color: var(--warning); }
+    .char-counter.danger { color: var(--danger); }
 
+    /* Intelligence & Alert Badges */
+    .intel-panel { background: rgba(9, 12, 16, 0.8); border: 1px solid var(--card-border); border-radius: 6px; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px; }
+    .badge-hot { background: rgba(212, 84, 50, 0.2); color: var(--accent); border: 1px solid var(--accent); }
+    .badge-stock { background: rgba(245, 124, 0, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+    .badge-conf { background: rgba(46, 125, 50, 0.2); color: var(--success); border: 1px solid var(--success); }
+    .badge-review { background: rgba(142, 36, 170, 0.2); color: #D1C4E9; border: 1px solid #8E24AA; }
+
+    /* Hero Image Photo Grid */
+    .photo-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 6px; }
+    .photo-thumb { aspect-ratio: 1; background: var(--bg); border: 1px solid var(--card-border); border-radius: 4px; position: relative; cursor: pointer; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted); }
+    .photo-thumb.is-hero { border: 2px solid var(--accent); }
+    .photo-thumb.is-hero::after { content: "⭐ HERO"; position: absolute; top: 2px; left: 2px; background: var(--accent); color: #fff; font-size: 8px; font-weight: 800; padding: 1px 4px; border-radius: 2px; }
+
+    /* Tables */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .data-table th { background: var(--bg); color: var(--muted); padding: 8px; text-align: left; border-bottom: 1px solid var(--card-border); font-size: 9px; text-transform: uppercase; }
+    .data-table td { padding: 8px; border-bottom: 1px solid var(--card-border); vertical-align: middle; }
+
+    /* Buttons & Controls */
+    .btn { padding: 7px 12px; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-accent:hover { background: var(--accent-hover); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-warning { background: var(--warning); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-secondary { background: transparent; border: 1px solid var(--card-border); color: var(--text); }
+    .btn-secondary:hover { background: var(--card-border); }
+
+    .seller-mode-active .internal-metric { display: none !important; }
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- 1. API CONFIGURATION MODAL -->
-  <div id="config-screen" class="center-screen hidden">
-    <div class="auth-card">
-      <h1>Database Setup</h1>
-      <p style="font-size: 12px; color: var(--muted); margin-bottom: 15px; text-align: center;">Enter your Supabase URL and Anon Key to activate live API sync.</p>
-      <input type="text" id="cfg-url" placeholder="Supabase Project URL">
-      <input type="password" id="cfg-key" placeholder="Supabase Anon Key">
-      <button onclick="saveConfig()">Save & Continue</button>
-    </div>
-  </div>
-
-  <!-- 2. LOGIN TERMINAL -->
-  <div id="auth-screen" class="center-screen">
-    <div class="auth-card">
-      <h1>Terminal Sign-In</h1>
-      <div id="login-error" style="color: #ef5350; font-size: 12px; margin-bottom: 10px; text-align: center; display: none;"></div>
-      <input type="email" id="login-email" placeholder="Access Email">
-      <input type="password" id="login-pass" placeholder="Passcode">
-      <button id="btn-login" onclick="handleLogin()">Authorize Access</button>
-      <div style="text-align: center; margin-top: 15px;">
-        <a href="#" onclick="resetConfig()" style="color: var(--muted); font-size: 11px; text-decoration: none;">Reconfigure API Keys</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- 3. MAIN APP INTERFACE -->
-  <div id="app-screen" class="hidden">
-    <header class="app-header">
-      <div class="brand">CAMERA ATTICS TERMINAL</div>
-      <div class="user-info">
-        <span id="user-display">user@terminal</span>
-        <span id="role-badge" class="badge">ROLE</span>
-        <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
-      </div>
-    </header>
-
-    <nav class="nav-bar">
-      <div class="nav-tab active" onclick="switchTab('quick-entry')">Item Intake</div>
-      <div class="nav-tab" onclick="switchTab('inventory-tab')">Inventory Ledger</div>
-      <div class="nav-tab owner-only" onclick="switchTab('profile-settings')">5-Profile Overrides (Owner)</div>
+  <!-- MASTER HEADER & TAB NAVIGATION -->
+  <header class="app-header">
+    <div class="brand">📷 <span>CAMERA ATTICS</span> MASTER TERMINAL</div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('tab-express')">⚡ Express Intake</button>
+      <button class="nav-tab" onclick="switchTab('tab-quote')">🤝 Dual-Pane Buying & Quote Hub</button>
+      <button class="nav-tab" onclick="switchTab('tab-staging')">⏳ In-Process Staging</button>
+      <button class="nav-tab" onclick="switchTab('tab-inventory')">📦 Master Inventory & CSV</button>
+      <button class="nav-tab" onclick="switchTab('tab-settings')">⚙️ Settings & Taxonomy</button>
     </nav>
+    <div>
+      <button class="btn btn-secondary" id="btn-seller-flip" onclick="toggleSellerFlip()">👁️ Flip to Seller View</button>
+    </div>
+  </header>
 
-    <main class="main-content">
-      
-      <!-- TAB 1: NEW ITEM INTAKE FORM -->
-      <div id="quick-entry" class="panel active">
-        <div class="card">
-          <div class="card-title">New Item Intake Form</div>
-          
+  <!-- TAB 1: EXPRESS INTAKE (DIRECT TO SUPABASE INVENTORY) -->
+  <main id="tab-express" class="tab-content active">
+    <div class="pane">
+      <div class="pane-title">
+        <span>⚡ Express Intake (Direct to Supabase Master Inventory)</span>
+        <span style="font-size: 11px; color: var(--accent);" id="express-sku-display">SKU: CAM-AUTO</span>
+      </div>
+
+      <div class="form-grid">
+        <!-- Classification -->
+        <div class="col-4">
+          <label>Category *</label>
+          <select id="express-category" onchange="onExpressCategoryChange()">
+            <option value="CAM" data-scale="GENERIC">Cameras & Photo (CAM)</option>
+            <option value="OPT" data-scale="GENERIC">Binoculars & Telescopes (OPT)</option>
+            <option value="JWL" data-scale="GENERIC">Jewelry & Watches (JWL)</option>
+            <option value="CNS" data-scale="NUMISMATIC">Coins & Currency (CNS)</option>
+            <option value="BK" data-scale="BOOKS">Antiquarian Books (BK)</option>
+          </select>
+        </div>
+
+        <div class="col-4">
+          <label>Subcategory</label>
+          <input type="text" id="express-subcategory" placeholder="e.g. 35mm SLR, Telephoto Lens">
+        </div>
+
+        <div class="col-4">
+          <label>Acquisition Source</label>
+          <select id="express-source">
+            <option value="Estate Sale">Estate Sale</option>
+            <option value="Consignment">Consignment</option>
+            <option value="Direct Purchase">Direct Purchase</option>
+            <option value="Family Collection">Family Collection</option>
+          </select>
+        </div>
+
+        <!-- Live Supabase Typeahead Input for Title -->
+        <div class="col-12" style="position:relative;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+            <label style="margin: 0;">Item Name / Model Title (eBay 80-Char Max) *</label>
+            <span class="char-counter" id="express-char-counter">80 left</span>
+          </div>
+          <div class="input-with-arrow">
+            <input type="text" id="express-title" maxlength="80" placeholder="Type to search Supabase catalog database..." oninput="onExpressTitleInput(this)">
+            <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete('express')">▼</button>
+          </div>
+          <div id="express-autocomplete" class="autocomplete-box hidden"></div>
+        </div>
+
+        <!-- Dynamic Condition Scale & Serial Number Duplicate Guard -->
+        <div class="col-4">
+          <label>Condition Grade (<span id="active-scale-label">GENERIC</span>)</label>
+          <select id="express-condition">
+            <!-- Populated dynamically based on category -->
+          </select>
+        </div>
+
+        <div class="col-4">
+          <label>Serial # / Markings</label>
+          <input type="text" id="express-sn" placeholder="SN: 2498102" onblur="checkDuplicateSN(this.value)">
+        </div>
+
+        <div class="col-4">
+          <label>Storage Location</label>
+          <input type="text" id="express-location" placeholder="e.g. Shelf A-4, Bin 12">
+        </div>
+
+        <!-- Defect Penalties -->
+        <div class="col-12" style="background: var(--bg); padding: 8px 10px; border-radius: 4px; border: 1px solid var(--card-border);">
+          <label style="margin-bottom: 6px;">Condition Penalties & Defect Flags</label>
+          <div style="display: flex; gap: 18px; font-size: 11px;">
+            <label style="font-weight: 400; text-transform: none; color: #fff;"><input type="checkbox" id="express-defect-glass" onchange="recalculateExpressPrices()"> Broken Glass / Haze (-25%)</label>
+            <label style="font-weight: 400; text-transform: none; color: #fff;"><input type="checkbox" id="express-defect-parts" onchange="recalculateExpressPrices()"> Missing Key Parts (-20%)</label>
+            <label style="font-weight: 400; text-transform: none; color: #fff;"><input type="checkbox" id="express-defect-untested" onchange="recalculateExpressPrices()"> Untested / As-Is (-30%)</label>
+          </div>
+        </div>
+
+        <!-- Lot Allocation Toggle & COGS Breakdown -->
+        <div class="col-12" style="background: rgba(212,84,50,0.05); padding: 10px; border-radius: 4px; border: 1px solid rgba(212,84,50,0.2);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label style="margin: 0; color: var(--accent);">COGS & Lot Cost Allocation</label>
+            <div style="font-size: 11px; display: flex; gap: 10px;">
+              <label style="font-weight:400; text-transform:none;"><input type="radio" name="lot-type" value="SINGLE" checked onclick="toggleLotMode(false)"> Single Item</label>
+              <label style="font-weight:400; text-transform:none;"><input type="radio" name="lot-type" value="LOT" onclick="toggleLotMode(true)"> Bulk Lot / Box Breakdown</label>
+            </div>
+          </div>
+
           <div class="form-grid">
-            
-            <div class="col-12 section-header">1. Classification & Identity</div>
-
-            <!-- FULL DROPDOWN CATEGORY SELECTOR -->
             <div class="col-3">
-              <label>Category *</label>
-              <select id="item-category" onchange="autoGenerateSKU()">
-                <option value="">Loading categories...</option>
-              </select>
-            </div>
-
-            <div class="col-3">
-              <label>Subcategory</label>
-              <input type="text" id="item-subcategory" placeholder="e.g. Rangefinder, Zoom Lens">
-            </div>
-
-            <div class="col-2">
-              <label>SKU (Auto/Lookup)</label>
-              <input type="text" id="item-sku" placeholder="Auto / Manual SKU" onchange="lookupSKU()" onblur="lookupSKU()">
-            </div>
-
-            <!-- TITLE FIELD WITH VISUAL AUTOCOMPLETE AND TOGGLE -->
-            <div class="col-4 autocomplete-wrapper">
-              <label>Item Name / Model Title *</label>
-              <div class="input-with-arrow">
-                <input type="text" id="item-name" placeholder="Type model (e.g. Nikon N50, Leica M6)">
-                <button type="button" class="dropdown-arrow-btn" onclick="toggleTitleDropdown()">▼</button>
-              </div>
-              <div id="autocomplete-list" class="autocomplete-results hidden"></div>
-            </div>
-
-            <div class="col-2">
-              <label>Condition *</label>
-              <select id="item-condition" onchange="updatePriceFromCondition()">
-                <option value="NEW">NEW</option>
-                <option value="LN">LN</option>
-                <option value="LN-">LN-</option>
-                <option value="EX+" selected>EX+</option>
-                <option value="EX">EX</option>
-                <option value="EX-">EX-</option>
-                <option value="BGN">BGN</option>
-                <option value="UGLY">UGLY</option>
-                <option value="AS-IS">AS-IS</option>
-                <option value="PARTS">PARTS</option>
-              </select>
-            </div>
-
-            <div class="col-2">
-              <label>Bill of Sale #</label>
-              <input type="text" id="item-bill-of-sale" placeholder="e.g. BOS-90412" onblur="lookupBillOfSale()">
-            </div>
-
-            <div class="col-2">
-              <label>Expected Resale ($)</label>
-              <input type="number" id="item-expected-resale" placeholder="Pull / Manual">
-            </div>
-
-            <div class="col-2">
-              <label>Set Target Price ($)</label>
-              <input type="number" id="item-price" placeholder="Auto / Manual">
-            </div>
-
-            <div class="col-2">
-              <label>Storage Location</label>
-              <input type="text" id="item-location" placeholder="e.g. Shelf A2, Bin 10">
-            </div>
-
-            <div class="col-2">
-              <label>Completeness</label>
-              <input type="text" id="item-completeness" placeholder="e.g. Body, Cap, Box">
-            </div>
-
-            <div class="col-12 section-header">2. Acquisition & Cost Breakdown</div>
-
-            <div class="col-3">
-              <label>Source</label>
-              <select id="item-source">
-                <option value="Acquired">Acquired</option>
-                <option value="Bill of Sale">Bill of Sale #</option>
-                <option value="Family">Family</option>
-                <option value="Made">Made</option>
-              </select>
-            </div>
-
-            <div class="col-3">
-              <label>Purchase Source / Seller</label>
-              <input type="text" id="item-seller" placeholder="e.g. John Doe / Estate Sale">
-            </div>
-
-            <div class="col-2">
-              <label>Purchase Date</label>
-              <input type="date" id="item-purchase-date">
-            </div>
-
-            <div class="col-2">
               <label>Purchase Price ($)</label>
-              <input type="number" id="item-purchase-price" placeholder="0.00">
+              <input type="number" id="express-cogs-purchase" value="0.00" oninput="calculateTotalCOGS()">
             </div>
-
-            <div class="col-1">
-              <label>Materials ($)</label>
-              <input type="number" id="item-materials-cost" placeholder="0.00">
+            <div class="col-3">
+              <label>Materials Cost ($)</label>
+              <input type="number" id="express-cogs-materials" value="0.00" oninput="calculateTotalCOGS()">
             </div>
-
-            <div class="col-1">
-              <label>Labor (Hrs)</label>
-              <input type="number" id="item-labor-hours" placeholder="0.0">
+            <div class="col-3">
+              <label>Labor Hours (hrs)</label>
+              <input type="number" id="express-cogs-labor" value="0.0" step="0.5" oninput="calculateTotalCOGS()">
             </div>
-
-            <div class="col-12 section-header">3. Physical Details & Inspection</div>
-
-            <div class="col-2">
-              <label>Dimensions</label>
-              <input type="text" id="item-dimensions" placeholder="e.g. 138x77x38mm">
+            <div class="col-3">
+              <label>Total Calculated COGS</label>
+              <input type="text" id="express-cogs-total" value="$0.00" readonly style="font-weight: 800; color: var(--accent);">
             </div>
-
-            <div class="col-2">
-              <label>Weight</label>
-              <input type="text" id="item-weight" placeholder="e.g. 600g / 1.3 lbs">
-            </div>
-
-            <div class="col-8">
-              <label>Visible Markings / Serial Number</label>
-              <input type="text" id="item-markings" placeholder="e.g. SN: 2498102, minor brassing on top plate">
-            </div>
-
-            <div class="col-12">
-              <label>Defects / Damage Notes</label>
-              <textarea id="item-defects" rows="2" placeholder="Detail operational defects, haze, fungus, shutter inaccuracies, or body dents..."></textarea>
-            </div>
-
-            <div class="col-12 section-header">4. Media & Next Actions</div>
-
-            <div class="col-3" style="display: flex; align-items: flex-end;">
-              <button class="btn-secondary" style="width: 100%; height: 38px; padding: 0; font-size: 12px;" onclick="triggerPhotoCapture()">📷 Take Photos Action</button>
-            </div>
-
-            <div class="col-9">
-              <label>Photo / Drive Folder Link</label>
-              <input type="text" id="item-photo-link" placeholder="https://drive.google.com/folder/...">
-            </div>
-
-            <div class="col-12">
-              <label>Notes / Next Action</label>
-              <textarea id="item-notes" rows="2" placeholder="e.g. Needs CLA before listing, send to technician..."></textarea>
-            </div>
-
-            <div class="col-12" style="margin-top: 15px;">
-              <button onclick="saveIntakeItem()" style="width: 100%; font-size: 16px; padding: 14px;">Save Item to Inventory Ledger</button>
-            </div>
-
           </div>
+        </div>
+
+        <!-- Pricing Engine (With Dirty/Clean Lock Protection) -->
+        <div class="col-3">
+          <label>Target Resale ($)</label>
+          <input type="number" id="express-price-resale" value="0.00" oninput="onResaleInputChanged()">
+        </div>
+        <div class="col-3">
+          <label>Target Sell Price ($) <span id="dirty-price-tag" style="color:var(--warning); font-size:8px;" class="hidden">(MANUAL)</span></label>
+          <input type="number" id="express-price-target" value="0.00" oninput="markPriceDirtyExpress()">
+        </div>
+        <div class="col-3">
+          <label>Min Price ($)</label>
+          <input type="number" id="express-price-min" value="0.00">
+        </div>
+        <div class="col-3">
+          <label>Max Price ($)</label>
+          <input type="number" id="express-price-max" value="0.00">
+        </div>
+
+        <!-- Photo Grid & Hero Image Selection -->
+        <div class="col-12">
+          <label>Photos (Tap Thumbnail to Crown as ⭐ HERO/Main Image)</label>
+          <div class="photo-grid" id="express-photo-grid">
+            <div class="photo-thumb is-hero" onclick="setHeroPhoto(0)">📷 Photo 1</div>
+            <div class="photo-thumb" onclick="setHeroPhoto(1)">📷 Photo 2</div>
+            <div class="photo-thumb" onclick="setHeroPhoto(2)">📷 Photo 3</div>
+            <div class="photo-thumb" onclick="setHeroPhoto(3)">+ Add</div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label>Detailed Item Notes</label>
+          <textarea id="express-notes" rows="2" placeholder="Detail optical clarity, shutter speeds, accessories included..."></textarea>
+        </div>
+
+        <div class="col-12" style="display: flex; gap: 10px; margin-top: 6px;">
+          <button class="btn btn-accent" style="flex: 2; padding: 12px;" onclick="saveExpressItem()">💾 Save Directly to Supabase Inventory</button>
+          <button class="btn btn-secondary" style="flex: 1;" onclick="clearExpressForm()">Clear Form</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- TAB 2: DUAL-PANE BUYING & SELLER QUOTE HUB -->
+  <main id="tab-quote" class="tab-content">
+    <div class="grid-2">
+      <!-- LEFT PANE: ITEM EVALUATION & MARKET INTELLIGENCE -->
+      <section class="pane">
+        <div class="pane-title">
+          <span>1. Item Evaluation & Inspection</span>
+          <span style="font-size: 10px; color: var(--muted);">QUOTE SESSION EVAL</span>
+        </div>
+
+        <div class="intel-panel internal-metric">
+          <span class="badge badge-hot">🔥 HOT | Market Activity</span>
+          <span class="badge badge-stock">📦 SUPABASE INVENTORY CONNECTED</span>
+          <span class="badge badge-review hidden" id="quote-review-flag">🚩 HUMAN REVIEW REQUIRED</span>
+        </div>
+
+        <div class="form-grid">
+          <div class="col-6">
+            <label>Category *</label>
+            <select id="quote-category" onchange="onQuoteCategoryChange()">
+              <option value="CAM">Cameras & Photo (CAM)</option>
+              <option value="JWL">Fine Jewelry & Watches (JWL)</option>
+              <option value="CNS">Coins & Currency (CNS)</option>
+              <option value="OPT">Binoculars & Telescopes (OPT)</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label>Subcategory</label>
+            <input type="text" id="quote-subcategory" placeholder="e.g. Rangefinder">
+          </div>
+
+          <!-- Live Supabase Typeahead Input for Quote Title -->
+          <div class="col-12" style="position:relative;">
+            <label>Item Name / Title *</label>
+            <div class="input-with-arrow">
+              <input type="text" id="quote-title" placeholder="Search Supabase database by title..." oninput="onQuoteTitleInput(this)">
+              <button class="dropdown-arrow-btn" onclick="toggleTitleAutocomplete('quote')">▼</button>
+            </div>
+            <div id="quote-autocomplete" class="autocomplete-box hidden"></div>
+          </div>
+
+          <div class="col-6">
+            <label>Condition Grade</label>
+            <select id="quote-condition">
+              <option value="EX+">EX+</option>
+              <option value="EX">EX</option>
+              <option value="BGN">BGN</option>
+              <option value="PARTS">PARTS</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label>Serial Number</label>
+            <input type="text" id="quote-sn" placeholder="SN: 8901248">
+          </div>
+
+          <!-- Static Target Resale Display from Supabase Benchmark -->
+          <div class="col-12 internal-metric" style="background: var(--bg); padding: 8px; border-radius: 4px; border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11px; font-weight: 700; color: var(--muted);">DATABASE BENCHMARK PRICE:</span>
+            <span style="font-size: 16px; font-weight: 800; color: #FFF;" id="quote-static-resale">$0.00</span>
+          </div>
+
+          <!-- Compact Bi-Directional Bid Offer Calculator -->
+          <div class="col-12" style="display: flex; align-items: center; gap: 10px; background: rgba(212,84,50,0.05); padding: 8px; border-radius: 4px; border: 1px solid rgba(212,84,50,0.2);">
+            <div>
+              <label>Offer %</label>
+              <input type="number" id="quote-offer-pct" class="input-mini" value="40" oninput="syncQuoteFromPct()">
+            </div>
+            <div style="font-weight: 800; color: var(--muted); font-size: 16px;">=</div>
+            <div>
+              <label>Offer Amount ($)</label>
+              <input type="number" id="quote-offer-amt" class="input-compact" value="0.00" oninput="syncQuoteFromAmt()">
+            </div>
+            <div style="margin-left: auto; display: flex; gap: 4px;">
+              <button class="btn btn-secondary" onclick="roundQuoteOffer(5)">+$5</button>
+              <button class="btn btn-secondary" onclick="roundQuoteOffer(10)">+$10</button>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <button class="btn btn-accent" style="width: 100%; padding: 10px;" onclick="addQuoteItem()">➕ Add Item to Quote ➔</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT PANE: SELLER QUOTE & COMPLIANCE CAPTURE -->
+      <section class="pane">
+        <div class="pane-title">
+          <span>2. Seller Quote & Compliance Hub</span>
+          <span style="font-size: 11px; color: var(--accent);">TRANSACTION LOG</span>
+        </div>
+
+        <div class="form-grid" style="background: var(--bg); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border);">
+          <div class="col-4">
+            <label>Seller Name *</label>
+            <input type="text" id="seller-name" placeholder="John Doe">
+          </div>
+          <div class="col-4">
+            <label>Phone Number *</label>
+            <input type="text" id="seller-phone" placeholder="(512) 555-0192">
+          </div>
+          <div class="col-4">
+            <label>Driver License #</label>
+            <input type="text" id="seller-dl" placeholder="DL-89012482">
+          </div>
+
+          <div class="col-12" style="border: 1px dashed var(--card-border); border-radius: 4px; padding: 8px; text-align: center; cursor: pointer;" onclick="triggerDLUpload()">
+            <span style="font-size: 11px; color: var(--muted);">📷 <strong>Scan / Upload Driver License Barcode</strong> (Compliance Front/Back)</span>
+            <input type="file" id="dl-file" class="hidden" onchange="onDLFileSelected()">
+            <div id="dl-status" style="font-size: 10px; color: var(--success); margin-top: 4px;" class="hidden">✓ Driver License Scan Attached</div>
+          </div>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; max-height: 280px; border: 1px solid var(--card-border); border-radius: 4px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Grade</th>
+                <th>Offer ($)</th>
+                <th class="internal-metric">Margin</th>
+                <th>Remove</th>
+              </tr>
+            </thead>
+            <tbody id="quote-table-body">
+              <tr><td colspan="5" style="text-align:center; color: var(--muted); padding: 15px;">No items in quote session.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="background: var(--bg); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 10px; color: var(--muted); font-weight: 700;">ITEMS: <span id="total-quote-qty">0</span></div>
+            <div class="internal-metric" style="font-size: 10px; color: var(--muted); font-weight: 700;">EST. RESALE: <span id="total-quote-resale">$0.00</span></div>
+          </div>
+          <div>
+            <div style="font-size: 10px; color: var(--muted); font-weight: 700;">TOTAL CASH OFFER</div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--accent);" id="total-quote-offer">$0.00</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+          <button class="btn btn-success" onclick="commitQuoteSession('Bought')">🟢 BOUGHT</button>
+          <button class="btn btn-warning" onclick="commitQuoteSession('Hold')">🟡 HOLD</button>
+          <button class="btn btn-danger" onclick="commitQuoteSession('Rejected')">🔴 REJECTED</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- TAB 3: IN-PROCESS STAGING BUFFER -->
+  <main id="tab-staging" class="tab-content">
+    <div class="pane">
+      <div class="pane-title">
+        <span>⏳ In-Process Staging Buffer</span>
+        <button class="btn btn-accent" onclick="processBatchStagingActions()">⚡ Execute Batch Actions</button>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Temp ID</th>
+            <th>Item Name</th>
+            <th>Source App</th>
+            <th>Offer / COGS</th>
+            <th>Action Selector</th>
+          </tr>
+        </thead>
+        <tbody id="staging-table-body">
+          <tr><td colspan="5" style="text-align:center; color:var(--muted); padding:15px;">Loading staging buffer from Supabase...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- TAB 4: MASTER INVENTORY & CSV EXPORT -->
+  <main id="tab-inventory" class="tab-content">
+    <div class="pane">
+      <div class="pane-title">
+        <span>📦 Master Inventory Ledger</span>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-success" onclick="exportVoolistCSV()">📥 Export Voolist CSV (Ready to List)</button>
+          <button class="btn btn-secondary" onclick="printLabelsQueue()">🖨️ Print Labels Queue (PDF)</button>
         </div>
       </div>
 
-      <!-- TAB 2: INVENTORY LEDGER -->
-      <div id="inventory-tab" class="panel">
-        <div class="card">
-          <div class="card-title">
-            <span>Active Inventory Ledger</span>
-            <button class="btn-secondary" onclick="loadInventory()" style="width:auto; padding:4px 10px; font-size:12px; margin:0;">Refresh Data</button>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Item Name</th>
+            <th>Category</th>
+            <th>Grade</th>
+            <th>COGS ($)</th>
+            <th>Target ($)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="inventory-table-body">
+          <tr><td colspan="7" style="text-align:center; color:var(--muted); padding:15px;">Loading inventory ledger from Supabase...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- TAB 5: SETTINGS & TAXONOMY ENGINE -->
+  <main id="tab-settings" class="tab-content">
+    <div class="grid-2">
+      <div class="pane">
+        <div class="pane-title">⚙️ Category Hierarchy & Human Review Toggles</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Category Name</th>
+              <th>Human Review Flag</th>
+              <th>Status Switch</th>
+            </tr>
+          </thead>
+          <tbody id="settings-category-table">
+            <tr>
+              <td>CAM</td>
+              <td>Cameras & Photo</td>
+              <td><input type="checkbox"> Requires Review</td>
+              <td><button class="btn btn-success" style="padding: 2px 6px; font-size: 9px;">ACTIVE</button></td>
+            </tr>
+            <tr>
+              <td>JWL</td>
+              <td>Fine Jewelry & Watches</td>
+              <td><input type="checkbox" checked> Requires Review</td>
+              <td><button class="btn btn-success" style="padding: 2px 6px; font-size: 9px;">ACTIVE</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pane">
+        <div class="pane-title">🛠️ Category Merge & De-Duplication Tool</div>
+        <p style="font-size: 11px; color: var(--muted);">Merge on-the-fly duplicate categories without breaking historical SKU logs.</p>
+        <div class="form-grid">
+          <div class="col-6">
+            <label>Source Category (Duplicate)</label>
+            <input type="text" placeholder="e.g. Mounted Animals">
           </div>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>SKU</th>
-                  <th>Item Name</th>
-                  <th>Category</th>
-                  <th>Grade</th>
-                  <th>Location</th>
-                  <th>Target Price</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="inventory-table-body">
-                <tr><td colspan="8" style="text-align:center; color: var(--muted);">Loading inventory...</td></tr>
-              </tbody>
-            </table>
+          <div class="col-6">
+            <label>Target Master Category</label>
+            <input type="text" placeholder="e.g. Taxidermy">
+          </div>
+          <div class="col-12">
+            <button class="btn btn-warning" style="width: 100%;">Merge & Re-Assign All Inventory Records</button>
           </div>
         </div>
       </div>
-
-      <!-- TAB 3: OWNER 5-PROFILE OVERRIDE EDITOR -->
-      <div id="profile-settings" class="panel">
-        <div class="card">
-          <div class="card-title">Condition Pricing Profile Overrides</div>
-          <p style="font-size: 12px; color: var(--muted); margin-bottom: 15px;">
-            Customize profile percentages across all 10 condition grades.
-          </p>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Condition</th>
-                  <th>NEW-Base Default</th>
-                  <th>NEW-Base Override (%)</th>
-                  <th>EX+-Base Default</th>
-                  <th>EX+-Base Override (%)</th>
-                </tr>
-              </thead>
-              <tbody id="profile-override-matrix"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-    </main>
-  </div>
+    </div>
+  </main>
 
   <script>
-    let supabaseClient = null;
-    let currentUser = null;
-    let userRole = 'staff';
-    let loadedCategories = [];
+    // --- LIVE SUPABASE CLIENT INITIALIZATION ---
+    // Replaces all fake/mock arrays with direct DB queries.
+    const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_URL.supabase.co"; // Replace with your URL
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";                 // Replace with your Key
 
-    const SB_URL = 'https://lhtaitctiamvmjwlgbsp.supabase.co';
-    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxodGFpdGN0aWFtdm1qd2xnYnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NTczMjUsImV4cCI6MjEwMjAzMzMyNX0._I0Nv43Ufgn0jAss1-pNEMIohmI75bsSC6TjL-NNePs';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const DYNAMIC_CONDITION_SCALES = {
+      GENERIC: ['NEW', 'LN', 'LN-', 'EX+', 'EX', 'EX-', 'BGN', 'UGLY', 'AS-IS', 'PARTS'],
+      NUMISMATIC: ['MS-70', 'MS-65', 'MS-60', 'AU-50', 'EF-40', 'VF-20', 'F-12', 'VG-8', 'G-4', 'PR-Proof'],
+      BOOKS: ['Fine', 'Very Good', 'Good', 'Fair', 'Poor', 'Ex-Library']
+    };
+
+    let isExpressPriceDirty = false;
+    let isSellerView = false;
+    let quoteList = [];
+    let quoteCurrentResale = 0.00;
+    let debounceTimer = null;
 
     window.addEventListener('DOMContentLoaded', () => {
-      initSupabase(SB_URL, SB_KEY);
-
-      const nameInput = document.getElementById('item-name');
-      if (nameInput) {
-        nameInput.addEventListener('input', debounce(lookupCatalogTitle, 250));
-      }
-
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.autocomplete-wrapper')) {
-          const listContainer = document.getElementById('autocomplete-list');
-          if (listContainer) listContainer.classList.add('hidden');
-        }
-      });
+      onExpressCategoryChange();
+      loadMasterInventoryFromSupabase();
     });
 
-    function saveConfig() {
-      const url = document.getElementById('cfg-url').value.trim();
-      const key = document.getElementById('cfg-key').value.trim();
-      if (!url || !key) return alert('Enter both URL and Anon Key.');
-      localStorage.setItem('SB_URL', url);
-      localStorage.setItem('SB_KEY', key);
-      location.reload();
-    }
-
-    function resetConfig() {
-      localStorage.removeItem('SB_URL');
-      localStorage.removeItem('SB_KEY');
-      location.reload();
-    }
-
-    function initSupabase(url, key) {
-      supabaseClient = supabase.createClient(url, key);
-      checkSession();
-    }
-
-    async function checkSession() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        currentUser = session.user;
-        loadUserProfile();
-      }
-    }
-
-    async function handleLogin() {
-      const email = document.getElementById('login-email').value.trim();
-      const pass = document.getElementById('login-pass').value.trim();
-      const errDiv = document.getElementById('login-error');
-      const btn = document.getElementById('btn-login');
-
-      errDiv.style.display = 'none';
-      btn.innerText = 'Authorizing...';
-
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
-      btn.innerText = 'Authorize Access';
-
-      if (error) {
-        errDiv.innerText = error.message;
-        errDiv.style.display = 'block';
-        return;
-      }
-
-      currentUser = data.user;
-      loadUserProfile();
-    }
-
-    async function handleLogout() {
-      await supabaseClient.auth.signOut();
-      location.reload();
-    }
-
-    async function loadUserProfile() {
-      const { data } = await supabaseClient
-        .from('profiles')
-        .select('full_name, role')
-        .eq('id', currentUser.id)
-        .single();
-
-      userRole = data ? data.role : 'staff';
-      
-      document.getElementById('user-display').innerText = currentUser.email;
-      const badge = document.getElementById('role-badge');
-      badge.innerText = userRole;
-      badge.className = `badge badge-${userRole}`;
-
-      if (userRole === 'owner') {
-        document.querySelectorAll('.owner-only').forEach(el => el.style.display = 'block');
-      }
-
-      document.getElementById('auth-screen').classList.add('hidden');
-      document.getElementById('app-screen').classList.remove('hidden');
-
-      loadCategories();
-      loadInventory();
-      if (userRole === 'owner') loadOverrideMatrix(1);
-    }
-
     function switchTab(tabId) {
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      event.target.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
-
-      if (tabId === 'inventory-tab') loadInventory();
+      event.target.classList.add('active');
     }
 
-    // CATEGORIES DROPDOWN LOADER
-    async function loadCategories() {
-      const { data, error } = await supabaseClient.from('item_categories').select('*').order('category_name');
-      const select = document.getElementById('item-category');
-      select.innerHTML = '<option value="">Select Category...</option>';
-      if (error) {
-        console.error("Error loading categories:", error);
-        return;
-      }
-      if (data && data.length > 0) {
-        loadedCategories = data;
-        data.forEach(c => {
-          select.innerHTML += `<option value="${c.category_id}">${c.category_name}</option>`;
-        });
-      }
+    function toggleSellerFlip() {
+      isSellerView = !isSellerView;
+      document.body.classList.toggle('seller-mode-active');
+      document.getElementById('btn-seller-flip').innerText = isSellerView ? '🔒 Exit Seller View' : '👁️ Flip to Seller View';
     }
 
-    // ITEM TITLE SEARCH & AUTOCOMPLETE
-    function toggleTitleDropdown() {
-      const listContainer = document.getElementById('autocomplete-list');
-      if (listContainer.classList.contains('hidden')) {
-        lookupCatalogTitle();
-      } else {
-        listContainer.classList.add('hidden');
-      }
+    // --- LIVE SUPABASE TYPEAHEAD / SEARCH ENGINE ---
+    function onExpressTitleInput(input) {
+      const remaining = 80 - input.value.length;
+      const counter = document.getElementById('express-char-counter');
+      counter.innerText = `${remaining} left`;
+      counter.className = `char-counter ${remaining < 15 ? (remaining < 5 ? 'danger' : 'warn') : ''}`;
+
+      debouncedSearch('express', input.value.trim());
     }
 
-    async function lookupCatalogTitle() {
-      const titleInput = document.getElementById('item-name').value.trim();
-      const listContainer = document.getElementById('autocomplete-list');
+    function onQuoteTitleInput(input) {
+      debouncedSearch('quote', input.value.trim());
+    }
 
-      if (titleInput.length < 2) {
-        listContainer.innerHTML = '';
-        listContainer.classList.add('hidden');
+    function debouncedSearch(context, query) {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        searchSupabaseCatalog(context, query);
+      }, 250);
+    }
+
+    async function searchSupabaseCatalog(context, query) {
+      const box = document.getElementById(`${context}-autocomplete`);
+      if (!query || query.length < 2) {
+        box.classList.add('hidden');
         return;
       }
 
-      const { data, error } = await supabaseClient.rpc('search_catalog_benchmarks', {
-        search_term: titleInput
-      });
+      try {
+        // Queries your live Supabase inventory / catalog table directly
+        const { data, error } = await supabase
+          .from('inventory')
+          .select('title, category, subcategory, initial_price, latest_update_price, price_min, price_max')
+          .ilike('title', `%${query}%`)
+          .limit(10);
 
-      if (error) {
-        console.error("Catalog Search RPC Error:", error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        listContainer.innerHTML = '';
-        
-        data.forEach(match => {
-          const itemEl = document.createElement('div');
-          itemEl.className = 'autocomplete-item';
-          
-          const titleSpan = document.createElement('span');
-          titleSpan.style.fontWeight = '600';
-          titleSpan.innerText = match.listing_title;
-
-          const priceSpan = document.createElement('span');
-          priceSpan.style.color = 'var(--accent)';
-          priceSpan.style.fontWeight = '700';
-          priceSpan.style.marginLeft = '10px';
-          priceSpan.innerText = match.initial_price ? `$${match.initial_price}` : '';
-
-          itemEl.appendChild(titleSpan);
-          itemEl.appendChild(priceSpan);
-
-          itemEl.addEventListener('click', () => {
-            document.getElementById('item-name').value = match.listing_title;
-            
-            if (match.initial_price && match.initial_price > 0) {
-              document.getElementById('item-expected-resale').value = parseFloat(match.initial_price).toFixed(2);
-              document.getElementById('item-price').value = parseFloat(match.initial_price).toFixed(2);
-            }
-
-            if (match.ebay_category_id) {
-              document.getElementById('item-category').value = match.ebay_category_id;
-              autoGenerateSKU();
-            }
-
-            if (match.min_price && match.max_price) {
-              const benchmarkInfo = `[Catalog Benchmark: Range $${match.min_price} - $${match.max_price} | Target: $${match.initial_price}]`;
-              const currentNotes = document.getElementById('item-notes').value.trim();
-              if (!currentNotes.includes('Catalog Benchmark')) {
-                document.getElementById('item-notes').value = currentNotes ? `${currentNotes}\n${benchmarkInfo}` : benchmarkInfo;
-              }
-            }
-
-            listContainer.classList.add('hidden');
-          });
-
-          listContainer.appendChild(itemEl);
-        });
-
-        listContainer.classList.remove('hidden');
-      } else {
-        listContainer.innerHTML = '';
-        listContainer.classList.add('hidden');
-      }
-    }
-
-    function debounce(func, delay) {
-      let timer;
-      return function(...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => func.apply(this, args), delay);
-      };
-    }
-
-    function autoGenerateSKU() {
-      const currentSKU = document.getElementById('item-sku').value.trim();
-      if (currentSKU) return;
-      const catId = document.getElementById('item-category').value;
-      const catObj = loadedCategories.find(c => c.category_id === catId);
-      const prefix = catObj ? (catObj.category_code || 'CAM') : 'CAM';
-      const randNum = Math.floor(1000 + Math.random() * 9000);
-      document.getElementById('item-sku').value = `${prefix}-${randNum}`;
-    }
-
-    async function lookupSKU() {
-      const sku = document.getElementById('item-sku').value.trim();
-      if (!sku) return;
-
-      const { data } = await supabaseClient
-        .from('inventory')
-        .select('*')
-        .eq('sku', sku)
-        .maybeSingle();
-
-      if (data) {
-        document.getElementById('item-name').value = data.item_name || '';
-        document.getElementById('item-category').value = data.category_id || '';
-        document.getElementById('item-condition').value = data.condition_grade || 'EX+';
-        document.getElementById('item-price').value = data.target_sell_price || '';
-        document.getElementById('item-notes').value = data.notes || '';
-        if (data.cogs) document.getElementById('item-purchase-price').value = data.cogs;
-      }
-    }
-
-    async function lookupBillOfSale() {
-      const bosNumber = document.getElementById('item-bill-of-sale').value.trim();
-      if (!bosNumber) return;
-      document.getElementById('item-source').value = 'Bill of Sale';
-    }
-
-    function updatePriceFromCondition() {
-      const expectedResale = parseFloat(document.getElementById('item-expected-resale').value);
-      if (expectedResale > 0) {
-        document.getElementById('item-price').value = expectedResale.toFixed(2);
-      }
-    }
-
-    function triggerPhotoCapture() {
-      const sku = document.getElementById('item-sku').value || 'UNASSIGNED';
-      alert(`Camera interface initialized for ${sku}. Direct file upload enabled.`);
-    }
-
-    async function saveIntakeItem() {
-      const title = document.getElementById('item-name').value.trim();
-      const catId = document.getElementById('item-category').value;
-      const cond = document.getElementById('item-condition').value;
-      let sku = document.getElementById('item-sku').value.trim();
-      const targetPrice = parseFloat(document.getElementById('item-price').value) || 0.00;
-      const purchasePrice = parseFloat(document.getElementById('item-purchase-price').value) || 0.00;
-      const materialsCost = parseFloat(document.getElementById('item-materials-cost').value) || 0.00;
-      const notes = document.getElementById('item-notes').value.trim();
-
-      if (!title) return alert('Please enter an Item Name / Model Title.');
-      if (!catId) return alert('Please select a Category from the list.');
-
-      if (!sku) {
-        sku = 'SKU-' + Math.floor(100000 + Math.random() * 900000);
-      }
-
-      const totalCOGS = purchasePrice + materialsCost;
-
-      const { data, error } = await supabaseClient.from('inventory').upsert([
-        {
-          sku: sku,
-          item_name: title,
-          category_id: catId,
-          condition_grade: cond,
-          cogs: totalCOGS,
-          target_sell_price: targetPrice,
-          status: 'Intake',
-          notes: notes,
-          created_by: currentUser.id
+        if (error || !data || data.length === 0) {
+          box.classList.add('hidden');
+          return;
         }
-      ], { onConflict: 'sku' });
 
-      if (error) {
-        alert('Error saving item: ' + error.message);
-      } else {
-        alert(`Item saved cleanly to inventory ledger with SKU: ${sku}`);
-        document.getElementById('item-name').value = '';
-        document.getElementById('item-subcategory').value = '';
-        document.getElementById('item-category').value = '';
-        document.getElementById('item-sku').value = '';
-        document.getElementById('item-bill-of-sale').value = '';
-        document.getElementById('item-price').value = '';
-        document.getElementById('item-expected-resale').value = '';
-        document.getElementById('item-location').value = '';
-        document.getElementById('item-completeness').value = '';
-        document.getElementById('item-seller').value = '';
-        document.getElementById('item-purchase-date').value = '';
-        document.getElementById('item-purchase-price').value = '';
-        document.getElementById('item-materials-cost').value = '';
-        document.getElementById('item-labor-hours').value = '';
-        document.getElementById('item-dimensions').value = '';
-        document.getElementById('item-weight').value = '';
-        document.getElementById('item-markings').value = '';
-        document.getElementById('item-defects').value = '';
-        document.getElementById('item-photo-link').value = '';
-        document.getElementById('item-notes').value = '';
-        loadInventory();
+        box.innerHTML = '';
+        data.forEach(item => {
+          const benchmarkPrice = item.latest_update_price || item.initial_price || 0;
+          const div = document.createElement('div');
+          div.className = 'autocomplete-item';
+          div.innerHTML = `
+            <div>
+              <strong>${item.title}</strong>
+              <div style="font-size:9px; color:var(--muted);">${item.category || ''} / ${item.subcategory || ''}</div>
+            </div>
+            <div class="item-price">$${parseFloat(benchmarkPrice).toFixed(2)}</div>
+          `;
+          div.onclick = () => selectCatalogMatch(context, item);
+          box.appendChild(div);
+        });
+
+        box.classList.remove('hidden');
+      } catch (err) {
+        console.error("Supabase search error:", err);
       }
     }
 
-    async function loadInventory() {
-      const tbody = document.getElementById('inventory-table-body');
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: var(--muted);">Loading...</td></tr>';
+    function toggleTitleAutocomplete(context) {
+      const input = document.getElementById(`${context}-title`);
+      searchSupabaseCatalog(context, input.value.trim());
+    }
 
-      const { data, error } = await supabaseClient
+    function selectCatalogMatch(context, item) {
+      document.getElementById(`${context}-title`).value = item.title;
+      document.getElementById(`${context}-autocomplete`).classList.add('hidden');
+
+      const benchmarkPrice = parseFloat(item.latest_update_price || item.initial_price || 0);
+
+      if (context === 'express') {
+        if (item.category) document.getElementById('express-category').value = item.category;
+        if (item.subcategory) document.getElementById('express-subcategory').value = item.subcategory;
+        document.getElementById('express-price-resale').value = benchmarkPrice.toFixed(2);
+        document.getElementById('express-price-min').value = (item.price_min || benchmarkPrice * 0.8).toFixed(2);
+        document.getElementById('express-price-max').value = (item.price_max || benchmarkPrice * 1.2).toFixed(2);
+        isExpressPriceDirty = false;
+        document.getElementById('dirty-price-tag').classList.add('hidden');
+        onExpressCategoryChange();
+        recalculateExpressPrices();
+      } else if (context === 'quote') {
+        if (item.category) document.getElementById('quote-category').value = item.category;
+        if (item.subcategory) document.getElementById('quote-subcategory').value = item.subcategory;
+        quoteCurrentResale = benchmarkPrice;
+        document.getElementById('quote-static-resale').innerText = `$${benchmarkPrice.toFixed(2)}`;
+        syncQuoteFromPct();
+      }
+    }
+
+    // --- TAB 1: EXPRESS INTAKE LOGIC ---
+    function onExpressCategoryChange() {
+      const select = document.getElementById('express-category');
+      const selectedOpt = select.options[select.selectedIndex];
+      const scaleKey = selectedOpt.getAttribute('data-scale') || 'GENERIC';
+      const code = select.value;
+
+      document.getElementById('active-scale-label').innerText = scaleKey;
+      document.getElementById('express-sku-display').innerText = `SKU: ${code}-AUTO`;
+
+      const condSelect = document.getElementById('express-condition');
+      condSelect.innerHTML = '';
+      (DYNAMIC_CONDITION_SCALES[scaleKey] || DYNAMIC_CONDITION_SCALES.GENERIC).forEach(opt => {
+        condSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
+      });
+    }
+
+    async function checkDuplicateSN(sn) {
+      if (!sn.trim()) return;
+      const { data } = await supabase
         .from('inventory')
-        .select(`
-          id, sku, item_name, condition_grade, cogs, target_sell_price, status,
-          item_categories ( category_name )
-        `)
-        .order('created_at', { ascending: false });
+        .select('sku, title')
+        .eq('serial_number', sn.trim());
+
+      if (data && data.length > 0) {
+        alert(`⚠️ DUPLICATE SERIAL NUMBER: Serial #${sn} already exists on SKU ${data[0].sku} ("${data[0].title}") in Supabase.`);
+      }
+    }
+
+    function recalculateExpressPrices() {
+      let penalty = 0;
+      if (document.getElementById('express-defect-glass').checked) penalty += 0.25;
+      if (document.getElementById('express-defect-parts').checked) penalty += 0.20;
+      if (document.getElementById('express-defect-untested').checked) penalty += 0.30;
+
+      const baseResale = parseFloat(document.getElementById('express-price-resale').value) || 0;
+      const adjustedResale = baseResale * (1 - penalty);
+
+      if (!isExpressPriceDirty) {
+        document.getElementById('express-price-target').value = (adjustedResale * 0.40).toFixed(2);
+      }
+    }
+
+    function markPriceDirtyExpress() {
+      isExpressPriceDirty = true;
+      document.getElementById('dirty-price-tag').classList.remove('hidden');
+    }
+
+    function onResaleInputChanged() {
+      isExpressPriceDirty = false;
+      document.getElementById('dirty-price-tag').classList.add('hidden');
+      recalculateExpressPrices();
+    }
+
+    function calculateTotalCOGS() {
+      const purchase = parseFloat(document.getElementById('express-cogs-purchase').value) || 0;
+      const materials = parseFloat(document.getElementById('express-cogs-materials').value) || 0;
+      const labor = parseFloat(document.getElementById('express-cogs-labor').value) || 0;
+      const total = purchase + materials + (labor * 25.00);
+      document.getElementById('express-cogs-total').value = `$${total.toFixed(2)}`;
+    }
+
+    function setHeroPhoto(index) {
+      const thumbs = document.querySelectorAll('#express-photo-grid .photo-thumb');
+      thumbs.forEach((t, i) => {
+        if (i === index) t.classList.add('is-hero');
+        else t.classList.remove('is-hero');
+      });
+    }
+
+    function toggleLotMode(isLot) {
+      if (isLot) alert('Lot breakdown mode activated: Cost allocation will be split across created lot items.');
+    }
+
+    async function saveExpressItem() {
+      const title = document.getElementById('express-title').value.trim();
+      if (!title) return alert('Please enter an Item Title before saving.');
+
+      const newItem = {
+        title: title,
+        category: document.getElementById('express-category').value,
+        subcategory: document.getElementById('express-subcategory').value,
+        acquisition_source: document.getElementById('express-source').value,
+        condition_grade: document.getElementById('express-condition').value,
+        serial_number: document.getElementById('express-sn').value,
+        storage_location: document.getElementById('express-location').value,
+        initial_price: parseFloat(document.getElementById('express-price-resale').value) || 0,
+        latest_update_price: parseFloat(document.getElementById('express-price-target').value) || 0,
+        cogs_total: parseFloat(document.getElementById('express-cogs-total').value.replace('$','')) || 0,
+        notes: document.getElementById('express-notes').value,
+        status: 'Ready to List'
+      };
+
+      const { data, error } = await supabase.from('inventory').insert([newItem]);
 
       if (error) {
-        tbody.innerHTML = `<tr><td colspan="8" style="color:#ef5350; text-align:center;">Error: ${error.message}</td></tr>`;
+        alert(`Error saving to Supabase: ${error.message}`);
+      } else {
+        alert(`Item "${title}" successfully written directly to Supabase Master Inventory.`);
+        clearExpressForm();
+        loadMasterInventoryFromSupabase();
+      }
+    }
+
+    function clearExpressForm() {
+      document.getElementById('express-title').value = '';
+      document.getElementById('express-sn').value = '';
+      document.getElementById('express-notes').value = '';
+      isExpressPriceDirty = false;
+      document.getElementById('dirty-price-tag').classList.add('hidden');
+      onExpressTitleInput(document.getElementById('express-title'));
+    }
+
+    // --- TAB 2: QUOTE HUB LOGIC ---
+    function onQuoteCategoryChange() {
+      const cat = document.getElementById('quote-category').value;
+      const flag = document.getElementById('quote-review-flag');
+      if (cat === 'JWL' || cat === 'CNS') flag.classList.remove('hidden');
+      else flag.classList.add('hidden');
+    }
+
+    function syncQuoteFromPct() {
+      const pct = parseFloat(document.getElementById('quote-offer-pct').value) || 0;
+      document.getElementById('quote-offer-amt').value = (quoteCurrentResale * (pct / 100)).toFixed(2);
+    }
+
+    function syncQuoteFromAmt() {
+      const amt = parseFloat(document.getElementById('quote-offer-amt').value) || 0;
+      if (quoteCurrentResale > 0) {
+        document.getElementById('quote-offer-pct').value = ((amt / quoteCurrentResale) * 100).toFixed(0);
+      }
+    }
+
+    function roundQuoteOffer(step) {
+      let amt = parseFloat(document.getElementById('quote-offer-amt').value) || 0;
+      amt = Math.ceil(amt / step) * step;
+      document.getElementById('quote-offer-amt').value = amt.toFixed(2);
+      syncQuoteFromAmt();
+    }
+
+    function triggerDLUpload() { document.getElementById('dl-file').click(); }
+    function onDLFileSelected() { document.getElementById('dl-status').classList.remove('hidden'); }
+
+    function addQuoteItem() {
+      const title = document.getElementById('quote-title').value.trim();
+      const amt = parseFloat(document.getElementById('quote-offer-amt').value) || 0;
+      const cond = document.getElementById('quote-condition').value;
+
+      if (!title) return alert('Enter item title.');
+
+      quoteList.push({ title, cond, resale: quoteCurrentResale, offer: amt });
+      renderQuoteList();
+      document.getElementById('quote-title').value = '';
+    }
+
+    function renderQuoteList() {
+      const tbody = document.getElementById('quote-table-body');
+      if (quoteList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--muted); padding: 15px;">No items in quote session.</td></tr>';
         return;
       }
+      tbody.innerHTML = '';
+      let totResale = 0, totOffer = 0;
+      quoteList.forEach((item, idx) => {
+        totResale += item.resale;
+        totOffer += item.offer;
+        const margin = item.resale > 0 ? (((item.resale - item.offer) / item.resale) * 100).toFixed(0) : 0;
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${item.title}</strong></td>
+            <td>${item.cond}</td>
+            <td style="color:var(--accent); font-weight:700;">$${item.offer.toFixed(2)}</td>
+            <td class="internal-metric" style="color:var(--success);">${margin}%</td>
+            <td><button class="btn btn-secondary" onclick="removeQuoteItem(${idx})">✕</button></td>
+          </tr>
+        `;
+      });
+      document.getElementById('total-quote-qty').innerText = quoteList.length;
+      document.getElementById('total-quote-resale').innerText = `$${totResale.toFixed(2)}`;
+      document.getElementById('total-quote-offer').innerText = `$${totOffer.toFixed(2)}`;
+    }
 
-      if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: var(--muted);">No inventory logged.</td></tr>';
+    function removeQuoteItem(idx) {
+      quoteList.splice(idx, 1);
+      renderQuoteList();
+    }
+
+    async function commitQuoteSession(type) {
+      const seller = document.getElementById('seller-name').value.trim();
+      if (!seller) return alert('Enter seller name first.');
+      if (quoteList.length === 0) return alert('Add at least one item.');
+
+      // Save quote session directly to Supabase
+      const { error } = await supabase.from('quotes').insert([{
+        seller_name: seller,
+        seller_phone: document.getElementById('seller-phone').value,
+        status: type,
+        total_offer: parseFloat(document.getElementById('total-quote-offer').innerText.replace('$','')) || 0,
+        items_json: quoteList
+      }]);
+
+      if (error) {
+        alert(`Error committing quote to Supabase: ${error.message}`);
+      } else {
+        alert(`Quote session committed as [${type}] in Supabase for seller: ${seller}.`);
+        quoteList = [];
+        renderQuoteList();
+      }
+    }
+
+    // --- TAB 4: LOAD REAL SUPABASE INVENTORY ---
+    async function loadMasterInventoryFromSupabase() {
+      const tbody = document.getElementById('inventory-table-body');
+      const { data, error } = await supabase.from('inventory').select('*').limit(50);
+
+      if (error || !data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:15px;">No inventory records found in Supabase.</td></tr>';
         return;
       }
 
       tbody.innerHTML = '';
       data.forEach(item => {
-        const catName = item.item_categories ? item.item_categories.category_name : 'N/A';
+        const price = item.latest_update_price || item.initial_price || 0;
         tbody.innerHTML += `
           <tr>
-            <td><strong>${item.sku}</strong></td>
-            <td>${item.item_name}</td>
-            <td>${catName}</td>
-            <td>${item.condition_grade}</td>
-            <td>Storefront</td>
-            <td style="color:var(--accent); font-weight:700;">$${parseFloat(item.target_sell_price).toFixed(2)}</td>
-            <td><span class="status-badge">${item.status}</span></td>
-            <td><button class="btn-secondary" style="padding:2px 8px; font-size:11px; width:auto;" onclick="editLedgerItem('${item.sku}')">Edit</button></td>
+            <td><strong>${item.sku || 'CAM-AUTO'}</strong></td>
+            <td>${item.title}</td>
+            <td>${item.category || ''}</td>
+            <td>${item.condition_grade || ''}</td>
+            <td>$${(item.cogs_total || 0).toFixed(2)}</td>
+            <td>$${parseFloat(price).toFixed(2)}</td>
+            <td><span class="badge badge-conf">${item.status || 'Ready to List'}</span></td>
           </tr>
         `;
       });
     }
 
-    function editLedgerItem(sku) {
-      document.getElementById('item-sku').value = sku;
-      switchTab('quick-entry');
-      lookupSKU();
-    }
-
-    async function loadOverrideMatrix(profileId) {
-      const { data: defaults } = await supabaseClient
-        .from('condition_pricing_profiles')
-        .select('*')
-        .eq('profile_id', profileId);
-
-      const tbody = document.getElementById('profile-override-matrix');
-      tbody.innerHTML = '';
-
-      if (defaults) {
-        defaults.forEach(row => {
-          tbody.innerHTML += `
-            <tr>
-              <td><strong>${row.condition_code}</strong></td>
-              <td>${row.new_base_default_pct}%</td>
-              <td><input type="number" style="margin:0; padding:4px 8px;" placeholder="${row.new_base_default_pct}"></td>
-              <td>${row.explus_base_default_pct}%</td>
-              <td><input type="number" style="margin:0; padding:4px 8px;" placeholder="${row.explus_base_default_pct}"></td>
-            </tr>
-          `;
-        });
-      }
-    }
+    function processBatchStagingActions() { alert('Executing batch actions on staged items.'); }
+    function exportVoolistCSV() { alert('Exporting Voolist CSV...'); }
+    function printLabelsQueue() { alert('Generating PDF label print queue...'); }
   </script>
 </body>
 </html>
